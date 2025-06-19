@@ -190,7 +190,11 @@ export class CFClient {
     const problems = await this.getProblemList();
     const filteredProblems = problems.problems.filter(
       (p) =>
-        p.rating !== undefined && p.rating >= minRating && p.rating <= maxRating
+        p.rating !== undefined &&
+        p.rating >= minRating &&
+        p.rating <= maxRating &&
+        p.type === "PROGRAMMING" &&
+        !p.tags.includes("*special")
     );
 
     if (filteredProblems.length < count) {

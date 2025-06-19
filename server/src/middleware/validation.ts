@@ -43,27 +43,26 @@ export const validateBattleCreation: RequestHandler = (req, res, next) => {
     res.status(400).json({
       error: "Duration must be more than 10 minutes and less than 300 minutes",
     });
-    return
+    return;
   }
 
   if (details.minRating < 0 || details.maxRating < 0) {
     res.status(400).json({ error: "Ratings must be non-negative" });
-  return  
+    return;
   }
-
 
   if (details.minRating >= details.maxRating - 100) {
     res.status(400).json({
-      error: "Minimum rating must be at least 100 less than maximum rating",
+      error: "Minimum rating must be more than 100 less than maximum rating",
     });
-    return
+    return;
   }
 
   if (details.problemCount <= 2 || details.problemCount > 10) {
     res.status(400).json({
       error: "Problem count must be between 3 and 10",
     });
-    return
+    return;
   }
 
   next();

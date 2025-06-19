@@ -156,3 +156,47 @@ export const getBattleSubmissions: RequestHandler = async (req, res) => {
     });
   }
 };
+
+export const joinBattle: RequestHandler = async (req, res) => {
+  const joinToken = req.params.joinToken;
+  // @ts-ignore
+  const userId = req.user.id;
+
+  if (!joinToken) {
+    res.status(400).json({ error: "Join token is required" });
+    return;
+  }
+
+  try {
+    const battleId = await battleService.joinBattle(joinToken, userId);
+    res.json({ battleId });
+  } catch (error) {
+    res.status(400).json({
+      error:
+        "message" in (error as any) ? (error as any).message : "Unknown error",
+    });
+  }
+};
+
+export const refreshSubmissions: RequestHandler = async (req, res) => {
+  const battleId = parseInt(req.params.id, 10);
+  // @ts-ignore
+  const userId = req.user.id;
+
+  if (isNaN(battleId)) {
+    res.status(400).json({ error: "Invalid battle ID" });
+    return;
+  }
+
+  try {
+    await battleService.refreshSubmissions(battleId, userId);
+    res.json({ message: "Submissions refreshed successfully" });
+  } catch (error) {
+    res.status(500).json({
+      error:
+        "message" in (error as any)
+          ? (error as any).message
+          : "Something went wrong.",
+    });
+  }
+};

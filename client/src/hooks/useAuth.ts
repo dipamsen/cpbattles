@@ -1,15 +1,23 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const LS_KEY = "cpb-jwt";
-export const BASE_API_URL = "http://localhost:5838";
+export const BASE_API_URL = import.meta.env.VITE_APP_BACKEND_URL; //"";
 
 type AuthResponse =
   | { authed: false; loading: false; error: string }
-  | { authed: true; loading: false; handle: string; jwt: string }
+  | {
+      authed: true;
+      loading: false;
+      handle: string;
+      jwt: string;
+      logout: () => void;
+    }
   | { authed: false; loading: true }
   | { authed: false; loading: false };
 
 export function useAuth(): AuthResponse {
+  const queryClient = useQueryClient();
+
   const { status, data } = useQuery<
     | {
         authed: true;
@@ -69,8 +77,15 @@ export function useAuth(): AuthResponse {
       authed: true,
       handle: data.handle,
       jwt: data.jwt,
+      logout() {
+        localStorage.removeItem(LS_KEY);
+        queryClient.invalidateQueries({
+          queryKey: ["auth"],
+        });
+      },
     };
   }
+
   return {
     loading: false,
     authed: false,

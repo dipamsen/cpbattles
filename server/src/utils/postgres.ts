@@ -11,7 +11,7 @@ export const queries = {
   DELETE_EXPIRED_VERIFICATIONS:
     "DELETE FROM verifications WHERE created_at < NOW() - INTERVAL '5 minutes';",
   CREATE_BATTLE:
-    "INSERT INTO battles (created_by, title, start_time, duration_min, min_rating, max_rating, num_problems) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+    "INSERT INTO battles (created_by, title, start_time, duration_min, min_rating, max_rating, num_problems, join_token) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
   JOIN_BATTLE:
     "INSERT INTO battle_participants (battle_id, user_id) VALUES ($1, $2) RETURNING id",
   START_BATTLE:
@@ -20,6 +20,8 @@ export const queries = {
     "UPDATE battles SET status = 'completed' WHERE id = $1 RETURNING *",
   INSERT_PROBLEM_TO_BATTLE:
     "INSERT INTO battle_problems (battle_id, contest_id, index, rating) VALUES ($1, $2, $3, $4) RETURNING id",
+  INSERT_SUBMISSION:
+    "INSERT INTO submissions (cf_id, battle_id, user_id, contest_id, index, verdict, passed_tests, time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
 } as const;
 
 export type Query = (typeof queries)[keyof typeof queries];
@@ -108,6 +110,14 @@ export class DatabaseClient {
     const result = await this.query<Battle>(
       "SELECT * FROM battles WHERE id = $1",
       [battleId]
+    );
+    return result.length > 0 ? result[0] : null;
+  }
+
+  async getBattleByJoinToken(joinToken: string) {
+    const result = await this.query<Battle>(
+      "SELECT * FROM battles WHERE join_token = $1",
+      [joinToken]
     );
     return result.length > 0 ? result[0] : null;
   }

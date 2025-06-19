@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
 
-export default function Countdown({ targetTime }: { targetTime: Date }) {
+export default function Countdown({
+  targetTime,
+  onZero,
+}: {
+  targetTime: Date;
+  onZero: () => void;
+}) {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetTime));
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimeLeft(calculateTimeLeft(targetTime));
+      const tl = calculateTimeLeft(targetTime);
+      setTimeLeft(tl);
+      if (tl.hours <= 0 && tl.minutes <= 0 && tl.seconds <= 0) {
+        clearInterval(interval);
+        onZero();
+      }
     }, 1000);
 
     return () => clearInterval(interval);

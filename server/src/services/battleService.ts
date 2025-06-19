@@ -1,7 +1,9 @@
 import { differenceInMinutes, differenceInSeconds } from "date-fns";
 import { db, pool } from "../config/database";
 import { queries, User } from "../utils/postgres";
-import { agenda } from "../config/agenda";
+import { agenda, pollSubmissions } from "../config/agenda";
+import nanoid from "nanoid";
+import { joinBattle } from "../controllers/battleController";
 
 export const battleService = {
   async createBattle(user: User, details: any) {
@@ -22,6 +24,7 @@ export const battleService = {
           details.minRating,
           details.maxRating,
           details.problemCount,
+          nanoid.nanoid(),
         ],
         client
       );
@@ -37,6 +40,22 @@ export const battleService = {
         "message" in (error as any) ? (error as any).message : "Unknown error"
       );
     }
+  },
+
+  async joinBattle(joinToken: string, userId: number) {
+    const battle = await db.getBattleByJoinToken(joinToken);
+    if (!battle) {
+      throw new Error("Battle not found or join token is invalid");
+    }
+    if (battle.status !== "pending") {
+      throw new Error("Battle has already started or ended");
+    }
+    const participants = await db.getBattleParticipants(battle.id);
+    if (participants.some((p) => p.id === userId)) {
+      throw new Error("You are already a participant in this battle");
+    }
+    await db.query(queries.JOIN_BATTLE, [battle.id, userId]);
+    return battle.id;
   },
 
   async getUserBattles(userId: number) {
@@ -169,12 +188,12 @@ export const battleService = {
 
         const correctSubmission = problemSubmissions
           .toSorted((a, b) => a.time.getTime() - b.time.getTime())
-          .find((s) => s.verdict === "ACCEPTED");
+          .find((s) => s.verdict === "OK");
 
         if (correctSubmission) {
           const wrongSubmissions = problemSubmissions.filter(
             (s) =>
-              s.verdict !== "ACCEPTED" &&
+              s.verdict !== "OK" &&
               s.time < correctSubmission.time &&
               s.passed_tests > 0
           );
@@ -237,5 +256,32 @@ export const battleService = {
     return submissions.toSorted((a, b) => {
       return a.time.getTime() - b.time.getTime(); // Sort by submission time (ascending)
     });
+  },
+
+  async refreshSubmissions(battleId: number, userId: number) {
+    const battle = await db.getBattleById(battleId);
+    if (!battle) {
+      throw new Error("Battle not found");
+    }
+
+    const participants = await db.getBattleParticipants(battleId);
+    if (
+      battle.created_by !== userId &&
+      participants.every((p) => p.id !== userId)
+    ) {
+      throw new Error(
+        "You are not allowed to refresh submissions for this battle"
+      );
+    }
+
+    if (battle.status !== "in_progress") {
+      throw new Error(
+        "Submissions can only be refreshed during an active battle"
+      );
+    }
+
+    const problems = await db.getBattleProblems(battleId);
+
+    pollSubmissions(battle, problems, participants);
   },
 };

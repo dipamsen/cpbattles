@@ -32,7 +32,7 @@ export default function BattlePage() {
   });
 
   if (auth.loading) {
-    return <div className="text-center">Loading...</div>;
+    return <div className="text-center w-full">Loading...</div>;
   }
 
   if (!auth.authed) {

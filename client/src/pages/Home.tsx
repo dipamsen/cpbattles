@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <>
       {auth.loading && (
-        <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-9/12 mx-auto py-8 gap-4">
+        <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-[90%] mx-auto py-8 gap-4">
           <div className="text-xl">Loading...</div>
         </div>
       )}
@@ -18,7 +18,7 @@ export default function Home() {
       {auth.authed && <AuthedHome user={auth} />}
 
       {!auth.loading && !auth.authed && (
-        <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-9/12 mx-auto py-8 gap-4">
+        <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-[90%] mx-auto py-8 gap-4">
           <div className="text-xl">
             Clash with friends in competitive programming battles!
           </div>
@@ -61,7 +61,7 @@ function AuthedHome({ user }: { user: { handle: string; jwt: string } }) {
 
   if (status === "pending") {
     return (
-      <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-9/12 mx-auto py-8 gap-4">
+      <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-[90%] mx-auto py-8 gap-4">
         <div className="text-xl">Loading battles...</div>
       </div>
     );
@@ -69,7 +69,7 @@ function AuthedHome({ user }: { user: { handle: string; jwt: string } }) {
 
   if (status === "error") {
     return (
-      <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-9/12 mx-auto py-8 gap-4">
+      <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-[90%] mx-auto py-8 gap-4">
         <div className="text-xl text-red-500">Failed to load battles</div>
       </div>
     );
@@ -86,7 +86,7 @@ function AuthedHome({ user }: { user: { handle: string; jwt: string } }) {
   // );
 
   return (
-    <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-9/12 mx-auto py-8 gap-4">
+    <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-[90%] mx-auto py-8 gap-4">
       {ongoingBattles.length === 0 && upcomingBattles.length === 0 && (
         <>
           <div className="text-xl">Welcome back, {user.handle}!</div>
@@ -190,7 +190,7 @@ function BattleCard({
   });
 
   return (
-    <div className="border p-4 rounded">
+    <div className="border p-4 rounded shadow bg-white hover:shadow-lg transition">
       <Link
         to={`/battle/${battle.id}`}
         className="text-xl font-bold hover:underline text-blue-600"

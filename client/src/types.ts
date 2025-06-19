@@ -29,6 +29,7 @@ export interface Battle {
   min_rating: number;
   max_rating: number;
   num_problems: number;
+  join_token: string;
 }
 
 export interface BattleParticipant {
@@ -55,5 +56,6 @@ export interface Submission {
   contest_id: number;
   index: string;
   verdict: string;
+  passed_tests: number;
   time: Date;
 }

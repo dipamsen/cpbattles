@@ -1,5 +1,8 @@
 import { Pool } from "pg";
 import { DatabaseClient } from "../utils/postgres";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export const pool = new Pool({
   user: process.env.DATABASE_USERNAME,

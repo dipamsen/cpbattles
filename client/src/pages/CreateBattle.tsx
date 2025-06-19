@@ -2,6 +2,7 @@ import { useNavigate } from "react-router";
 import { BASE_API_URL, useAuth } from "../hooks/useAuth";
 import Button from "../components/Button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import TextInput from "../components/TextInput";
 
 export default function CreateBattle() {
   const auth = useAuth();
@@ -47,7 +48,7 @@ export default function CreateBattle() {
 
   if (auth.loading) {
     return (
-      <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-9/12 mx-auto py-8 gap-4">
+      <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-[90%] mx-auto py-8 gap-4">
         <div className="text-xl">Loading...</div>
       </div>
     );
@@ -77,7 +78,7 @@ export default function CreateBattle() {
 
   return (
     <>
-      <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-9/12 mx-auto py-8 gap-4">
+      <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-[90%] mx-auto py-8 gap-4">
         <h1 className="text-2xl font-bold mb-4">Create a Battle</h1>
 
         <form className="w-full max-w-lg" onSubmit={handleSubmit}>
@@ -85,35 +86,35 @@ export default function CreateBattle() {
             <label className="block text-gray-700 mb-2" htmlFor="title">
               Battle Title
             </label>
-            <input
+            <TextInput
+              className="w-full"
               type="text"
               name="title"
               id="title"
-              className="border border-gray-300 rounded px-4 py-2 w-full"
               placeholder="Enter battle title"
             />
           </div>
           <div className="mb-4 flex items-center gap-4">
-            <div className="w-full">
+            <div className="flex-1 min-w-0">
               <label className="block text-gray-700 mb-2" htmlFor="startTime">
                 Start Time
               </label>
-              <input
+              <TextInput
+                className="w-full"
                 type="datetime-local"
                 name="startTime"
                 id="startTime"
-                className="border border-gray-300 rounded px-4 py-2 w-full"
               />
             </div>
-            <div className="w-full">
+            <div className="flex-1 min-w-0">
               <label className="block text-gray-700 mb-2" htmlFor="duration">
                 Duration (minutes)
               </label>
-              <input
+              <TextInput
+                className="w-full"
                 type="number"
                 name="duration"
                 id="duration"
-                className="border border-gray-300 rounded px-4 py-2 w-full"
                 placeholder="Enter duration in minutes"
               />
             </div>
@@ -123,23 +124,23 @@ export default function CreateBattle() {
               <label className="block text-gray-700 mb-2" htmlFor="minRating">
                 Minimum Rating
               </label>
-              <input
+              <TextInput
+                className="w-full"
                 type="number"
                 name="minRating"
                 id="minRating"
-                className="border border-gray-300 rounded px-4 py-2 w-full"
                 placeholder="Enter minimum rating"
               />
             </div>
             <div className="w-full">
-              <label className="block text-gray-700 mb-2]" htmlFor="maxRating">
+              <label className="block text-gray-700 mb-2" htmlFor="maxRating">
                 Maximum Rating
               </label>
-              <input
+              <TextInput
+                className="w-full"
                 type="number"
                 name="maxRating"
                 id="maxRating"
-                className="border border-gray-300 rounded px-4 py-2 w-full"
                 placeholder="Enter maximum rating"
               />
             </div>
@@ -148,12 +149,12 @@ export default function CreateBattle() {
             <label className="block text-gray-700 mb-2" htmlFor="problemCount">
               Number of Problems
             </label>
-            <input
+            <TextInput
+              className="w-full"
               type="number"
               name="problemCount"
               id="problemCount"
-              className="border border-gray-300 rounded px-4 py-2 w-full"
-              placeholder="Enter number of problems (3-10)"
+              placeholder="Enter number of problems"
             />
           </div>
           <Button type="submit" disabled={isDisabled}>

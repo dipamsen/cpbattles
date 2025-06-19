@@ -16,6 +16,7 @@ import Button from "../components/Button";
 import { useNavigate } from "react-router";
 import { BASE_API_URL, LS_KEY, useAuth } from "../hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
+import TextInput from "../components/TextInput";
 
 type State =
   | {
@@ -124,7 +125,7 @@ export default function VerifyCF() {
   return (
     <div className="mx-auto">
       {auth.loading && (
-        <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-9/12 mx-auto py-8 gap-4">
+        <div className="flex flex-col items-center h-full flex-1 max-w-7xl w-[90%] mx-auto py-8 gap-4">
           <div className="text-xl">Loading...</div>
         </div>
       )}
@@ -141,10 +142,10 @@ export default function VerifyCF() {
             className="flex flex-col items-center w-full max-w-md"
             onSubmit={handleSubmit}
           >
-            <input
+            <TextInput
               type="text"
+              className="mb-4 w-full"
               placeholder="Codeforces Handle"
-              className="border border-gray-300 rounded px-4 py-2 mb-4 w-full disabled:opacity-50"
               disabled={state.status !== "idle"}
             />
             <Button disabled={state.status !== "idle"} type="submit">
