@@ -1,0 +1,5 @@
+{
+  "appService.zipIgnorePattern": ["node_modules{,/**}", ".vscode{,/**}"],
+  "appService.defaultWebAppToDeploy": "/subscriptions/a05a2c69-010e-494e-ba21-ce8ca13e14ba/resourceGroups/cpbattles-backend_group/providers/Microsoft.Web/sites/cpbattles-backend",
+  "appService.deploySubpath": "server"
+}
