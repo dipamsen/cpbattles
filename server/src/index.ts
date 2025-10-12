@@ -43,6 +43,7 @@ app.use(
 
 app.use("/auth", authRoutes);
 app.use("/api", battleRoutes);
+app.enable('trust proxy'); 
 
 agenda.on("ready", () => {
   agenda.start();
