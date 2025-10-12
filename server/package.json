@@ -9,8 +9,8 @@
     "start": "node dist/index.js"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Dipam Sen",
+  "license": "MIT",
   "dependencies": {
     "agenda": "^5.0.0",
     "cors": "^2.8.5",
