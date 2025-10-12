@@ -3,7 +3,6 @@ import { DatabaseClient } from "../utils/postgres";
 import dotenv from "dotenv";
 
 dotenv.config();
-console.log(process.env)
 
 export const pool = new Pool({
   user: process.env.DATABASE_USERNAME,

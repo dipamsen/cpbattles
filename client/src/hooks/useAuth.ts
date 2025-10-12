@@ -1,6 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const LS_KEY = "cpb-jwt";
 export const BASE_API_URL = import.meta.env.VITE_APP_BACKEND_URL; //"";
 
 type AuthResponse =
@@ -9,7 +8,6 @@ type AuthResponse =
       authed: true;
       loading: false;
       handle: string;
-      jwt: string;
       logout: () => void;
     }
   | { authed: false; loading: true }
@@ -22,23 +20,13 @@ export function useAuth(): AuthResponse {
     | {
         authed: true;
         handle: string;
-        jwt: string;
       }
     | { authed: false }
   >({
     queryKey: ["auth"],
     queryFn: async () => {
-      const token = localStorage.getItem(LS_KEY);
-      if (!token) {
-        return {
-          authed: false,
-        };
-      }
-
-      const response = await fetch(BASE_API_URL + "/api/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await fetch(BASE_API_URL + "/auth/me", {
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -51,7 +39,6 @@ export function useAuth(): AuthResponse {
       return {
         authed: true,
         handle: userData.handle,
-        jwt: token,
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -76,9 +63,11 @@ export function useAuth(): AuthResponse {
       loading: false,
       authed: true,
       handle: data.handle,
-      jwt: data.jwt,
-      logout() {
-        localStorage.removeItem(LS_KEY);
+      async logout() {
+        await fetch(BASE_API_URL + "/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        });
         queryClient.invalidateQueries({
           queryKey: ["auth"],
         });

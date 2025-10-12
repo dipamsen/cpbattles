@@ -15,6 +15,7 @@ export const validateBattleCreation: RequestHandler = (req, res, next) => {
   const details = req.body;
 
   if (
+    !details ||
     !details.name ||
     !details.startTime ||
     !details.duration ||

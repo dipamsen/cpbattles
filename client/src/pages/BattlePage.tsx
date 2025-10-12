@@ -19,9 +19,9 @@ export default function BattlePage() {
     queryFn: async () => {
       if (!auth.authed) throw new Error("Unauthorized");
       const response = await fetch(`${BASE_API_URL}/api/battle/${battleId}`, {
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.jwt}`,
         },
       });
       if (!response.ok) {
@@ -57,11 +57,11 @@ export default function BattlePage() {
   }
 
   if (battle.status === "pending") {
-    return <UpcomingBattle battle={battle} auth={auth} />;
+    return <UpcomingBattle battle={battle} />;
   } else if (battle.status === "in_progress") {
-    return <OngoingBattle battle={battle} auth={auth} />;
+    return <OngoingBattle battle={battle} />;
   } else if (battle.status === "completed") {
-    return <FinishedBattle battle={battle} auth={auth} />;
+    return <FinishedBattle battle={battle} />;
   } else {
     return (
       <div className="text-center w-full text-red-500">

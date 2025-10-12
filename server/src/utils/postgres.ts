@@ -1,15 +1,11 @@
 import { Pool, QueryResultRow, PoolClient } from "pg";
 
 export const queries = {
-  INSERT_USER: "INSERT INTO users (handle) VALUES ($1) RETURNING id",
-  CREATE_VERIFICATION:
-    "INSERT INTO verifications (user_id, contest_id, index) VALUES ($1, $2, $3) RETURNING id",
-  DELETE_VERIFICATIONS_BY_USER_ID:
-    "DELETE FROM verifications WHERE user_id = $1",
-  VERIFY_USER:
-    "UPDATE users SET verified = TRUE, last_verified = NOW() WHERE id = $1 RETURNING *",
-  DELETE_EXPIRED_VERIFICATIONS:
-    "DELETE FROM verifications WHERE created_at < NOW() - INTERVAL '5 minutes';",
+  UPSERT_USER: `INSERT INTO users (sub, handle, avatar, rating, last_login)
+      VALUES ($1, $2, $3, $4, NOW())
+      ON CONFLICT (sub) 
+      DO UPDATE SET handle = $2, avatar = $3, rating = $4, last_login = NOW()
+      RETURNING *`,
   CREATE_BATTLE:
     "INSERT INTO battles (created_by, title, start_time, duration_min, min_rating, max_rating, num_problems, join_token) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
   JOIN_BATTLE:
@@ -30,36 +26,17 @@ interface QueryResult {
   INSERT_USER: {
     id: number;
   }[];
-  CREATE_VERIFICATION: {
-    id: number;
-  }[];
-  DELETE_VERIFICATIONS_BY_USER_ID: {}[];
-  VERIFY_USER: User[];
+  UPSERT_USER: User[];
 }
 
 export class DatabaseClient {
   constructor(private readonly pool: Pool) {}
 
   query(
-    query: typeof queries.INSERT_USER,
-    params: [string],
+    query: typeof queries.UPSERT_USER,
+    params: [string, string, string | null, number | null],
     client: PoolClient
-  ): Promise<QueryResult["INSERT_USER"]>;
-  query(
-    query: typeof queries.CREATE_VERIFICATION,
-    params: [number, number, string],
-    client: PoolClient
-  ): Promise<QueryResult["CREATE_VERIFICATION"]>;
-  query(
-    query: typeof queries.DELETE_VERIFICATIONS_BY_USER_ID,
-    params: [number],
-    client: PoolClient
-  ): Promise<QueryResult["DELETE_VERIFICATIONS_BY_USER_ID"]>;
-  query(
-    query: typeof queries.VERIFY_USER,
-    params: [number],
-    client: PoolClient
-  ): Promise<QueryResult["VERIFY_USER"]>;
+  ): Promise<QueryResult["UPSERT_USER"]>;
 
   async query<T extends QueryResultRow>(
     text: string,
@@ -91,19 +68,11 @@ export class DatabaseClient {
     await this.pool.end();
   }
 
-  async getUserByHandle(handle: string) {
-    const result = await this.query("SELECT * FROM users WHERE handle = $1", [
-      handle,
+  async getUserBySub(sub: string) {
+    const result = await this.query("SELECT * FROM users WHERE sub = $1", [
+      sub,
     ]);
     return result.length > 0 ? result[0] : null;
-  }
-
-  async getVerificationsByUserId(userId: number) {
-    const result = await this.query<Verification>(
-      "SELECT * FROM verifications WHERE user_id = $1",
-      [userId]
-    );
-    return result;
   }
 
   async getBattleById(battleId: number) {
@@ -157,13 +126,11 @@ export class DatabaseClient {
 
 export interface User {
   id: number;
+  sub: string;
   handle: string;
-  verified: boolean;
-  last_verified: Date | null;
-  verification_token: string | null;
-  session_token: string | null;
+  avatar: string;
+  rating: number;
   created_at: Date;
-  verified_at: Date | null;
   last_login: Date | null;
 }
 

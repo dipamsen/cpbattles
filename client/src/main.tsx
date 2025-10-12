@@ -9,7 +9,6 @@ import {
   Outlet,
   RouterProvider,
 } from "react-router";
-import VerifyCF from "./pages/VerifyCF.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
 import CreateBattle from "./pages/CreateBattle.tsx";
 
@@ -26,10 +25,6 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <Home />,
-      },
-      {
-        path: "verify",
-        element: <VerifyCF />,
       },
       {
         path: "create",

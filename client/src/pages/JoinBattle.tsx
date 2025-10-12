@@ -24,8 +24,8 @@ export default function JoinBattle() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.jwt}`,
           },
+          credentials: "include"
         }
       );
       const out = await response.json();

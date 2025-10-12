@@ -11,10 +11,8 @@ import { addMinutes, differenceInSeconds } from "date-fns";
 
 export default function OngoingBattle({
   battle,
-  auth,
 }: {
   battle: Battle;
-  auth: { jwt: string };
 }) {
   const queryClient = useQueryClient();
 
@@ -31,8 +29,8 @@ export default function OngoingBattle({
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.jwt}`,
           },
+          credentials: "include",
         }
       );
       if (!response.ok) {
@@ -64,8 +62,8 @@ export default function OngoingBattle({
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.jwt}`,
           },
+          credentials: "include",
         }
       );
       if (!response.ok) {
@@ -85,8 +83,8 @@ export default function OngoingBattle({
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.jwt}`,
           },
+          credentials: "include",
         }
       );
       if (!response.ok) {

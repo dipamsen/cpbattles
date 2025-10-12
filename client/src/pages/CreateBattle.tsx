@@ -22,9 +22,9 @@ export default function CreateBattle() {
 
       const response = await fetch(BASE_API_URL + "/api/create", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.jwt}`,
         },
         body: JSON.stringify(details),
       });

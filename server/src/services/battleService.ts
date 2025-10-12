@@ -48,11 +48,11 @@ export const battleService = {
       throw new Error("Battle not found or join token is invalid");
     }
     if (battle.status !== "pending") {
-      throw new Error("Battle has already started or ended");
+      throw new Error("You can only join battles that have not started yet");
     }
     const participants = await db.getBattleParticipants(battle.id);
     if (participants.some((p) => p.id === userId)) {
-      throw new Error("You are already a participant in this battle");
+      return battle.id;
     }
     await db.query(queries.JOIN_BATTLE, [battle.id, userId]);
     return battle.id;

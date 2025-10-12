@@ -5,10 +5,8 @@ import { differenceInSeconds } from "date-fns";
 
 export default function FinishedBattle({
   battle,
-  auth,
 }: {
   battle: Battle;
-  auth: { jwt: string };
 }) {
   const startTime = new Date(battle.start_time);
   const fmt = new Intl.DateTimeFormat("en-US", {
@@ -38,8 +36,8 @@ export default function FinishedBattle({
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.jwt}`,
           },
+          credentials: "include"
         }
       );
       if (!response.ok) {
@@ -57,8 +55,8 @@ export default function FinishedBattle({
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.jwt}`,
           },
+          credentials: "include"
         }
       );
       if (!response.ok) {
@@ -78,8 +76,8 @@ export default function FinishedBattle({
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.jwt}`,
           },
+          credentials: "include"
         }
       );
       if (!response.ok) {

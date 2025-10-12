@@ -10,26 +10,35 @@ import {
   joinBattle,
   refreshSubmissions,
 } from "../controllers/battleController";
-import { authenticateToken } from "../middleware/auth";
+import { authenticateSession } from "../middleware/auth";
 import { validateBattleCreation } from "../middleware/validation";
 
 const router = express.Router();
 
-router.post("/create", authenticateToken, validateBattleCreation, createBattle);
-router.post("/battle/join/:joinToken", authenticateToken, joinBattle);
-router.get("/battles", authenticateToken, getUserBattles);
-router.get("/battle/:id", authenticateToken, getBattle);
+router.post(
+  "/create",
+  authenticateSession,
+  validateBattleCreation,
+  createBattle
+);
+router.post("/battle/join/:joinToken", authenticateSession, joinBattle);
+router.get("/battles", authenticateSession, getUserBattles);
+router.get("/battle/:id", authenticateSession, getBattle);
 router.get(
   "/battle/:id/participants",
-  authenticateToken,
+  authenticateSession,
   getBattleParticipants
 );
-router.get("/battle/:id/problems", authenticateToken, getBattleProblems);
-router.get("/battle/:id/standings", authenticateToken, getBattleStandings);
-router.get("/battle/:id/submissions", authenticateToken, getBattleSubmissions);
+router.get("/battle/:id/problems", authenticateSession, getBattleProblems);
+router.get("/battle/:id/standings", authenticateSession, getBattleStandings);
+router.get(
+  "/battle/:id/submissions",
+  authenticateSession,
+  getBattleSubmissions
+);
 router.get(
   "/battle/:id/refreshSubmissions",
-  authenticateToken,
+  authenticateSession,
   refreshSubmissions
 );
 

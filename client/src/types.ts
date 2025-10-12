@@ -1,21 +1,11 @@
 export interface User {
   id: number;
+  sub: string;
   handle: string;
-  verified: boolean;
-  last_verified: Date | null;
-  verification_token: string | null;
-  session_token: string | null;
+  avatar: string;
+  rating: number;
   created_at: Date;
-  verified_at: Date | null;
   last_login: Date | null;
-}
-
-export interface Verification {
-  id: number;
-  user_id: number;
-  created_at: Date;
-  contest_id: number;
-  index: string;
 }
 
 export interface Battle {

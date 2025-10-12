@@ -2,22 +2,12 @@
 
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
+    sub VARCHAR(255) UNIQUE NOT NULL,
     handle VARCHAR(50) UNIQUE NOT NULL,
-    verified BOOLEAN DEFAULT FALSE,
-    last_verified TIMESTAMP DEFAULT NULL,
-    verification_token TEXT DEFAULT NULL,
-    session_token TEXT DEFAULT NULL,
+    avatar TEXT DEFAULT NULL,
+    rating INTEGER DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    verified_at TIMESTAMP DEFAULT NULL,
     last_login TIMESTAMP DEFAULT NULL
-);
-
-CREATE TABLE IF NOT EXISTS verifications (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    contest_id INTEGER NOT NULL,
-    index TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS battles (
@@ -57,7 +47,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     contest_id INTEGER NOT NULL,
     index TEXT NOT NULL,
-    verdict TEXT NOT NULL, -- 'AC', 'WA', 'TLE', 'RE', etc.
+    verdict TEXT NOT NULL, -- 'OK', 'WA', 'TLE', 'RE', etc.
     passed_tests INTEGER NOT NULL,
     
     time TIMESTAMP DEFAULT CURRENT_TIMESTAMP

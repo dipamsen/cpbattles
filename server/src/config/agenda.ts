@@ -187,15 +187,7 @@ agenda.define("battle:end", async (job: Job<{ battleId: number }>) => {
   }
 });
 
-// Define job for cleaning up expired verifications
-// agenda.define("delete expired verifications", async (job: Job) => {
-//   await db.query(queries.DELETE_EXPIRED_VERIFICATIONS, []);
-//   console.log("Expired verifications deleted");
-// });
-
 // Schedule recurring cleanup job
 agenda.on("ready", async () => {
-  // await agenda.every("5 minutes", "delete expired verifications");
-
   agenda.start();
 });

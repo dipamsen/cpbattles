@@ -1,16 +1,17 @@
 import express from "express";
 import {
-  verifyUser,
-  checkSubmission,
   getMe,
+  handleCallback,
+  loginWithCodeforces,
+  logout,
 } from "../controllers/authController";
-import { authenticateToken } from "../middleware/auth";
-import { validateHandle } from "../middleware/validation";
+import { authenticateSession } from "../middleware/auth";
 
 const router = express.Router();
 
-router.post("/verify-user", validateHandle, verifyUser);
-router.post("/check-submission", validateHandle, checkSubmission);
-router.get("/me", authenticateToken, getMe);
+router.get("/me", authenticateSession, getMe);
+router.get("/login", loginWithCodeforces);
+router.get("/callback", handleCallback);
+router.post("/logout", authenticateSession, logout);
 
 export default router;

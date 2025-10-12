@@ -24,15 +24,15 @@ export default function Home() {
           </div>
 
           <div className="text-gray-600">
-            Get started by verifying with your Codeforces handle.
+            Get started by connecting your Codeforces account.
           </div>
           <div className="mt-4">
-            <Link
-              to="/verify"
+            <a
+              href={BASE_API_URL + "/auth/login"}
               className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
             >
-              Verify with Codeforces
-            </Link>
+              Login with Codeforces
+            </a>
           </div>
         </div>
       )}
@@ -40,14 +40,12 @@ export default function Home() {
   );
 }
 
-function AuthedHome({ user }: { user: { handle: string; jwt: string } }) {
+function AuthedHome({ user }: { user: { handle: string } }) {
   const { status, data: battles } = useQuery<Battle[]>({
     queryKey: ["battles"],
     queryFn: async () => {
       const response = await fetch(BASE_API_URL + "/api/battles", {
-        headers: {
-          Authorization: `Bearer ${user.jwt}`,
-        },
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -152,13 +150,11 @@ function AuthedHome({ user }: { user: { handle: string; jwt: string } }) {
 
 function BattleCard({
   battle,
-  user,
 }: // status: battleStatus,
 {
   battle: Battle;
   user: {
     handle: string;
-    jwt: string;
   };
   status: "in_progress" | "pending" | "completed";
 }) {
@@ -174,11 +170,7 @@ function BattleCard({
     queryFn: async () => {
       const response = await fetch(
         `${BASE_API_URL}/api/battle/${battle.id}/participants`,
-        {
-          headers: {
-            Authorization: `Bearer ${user.jwt}`,
-          },
-        }
+        { credentials: "include" }
       );
 
       if (!response.ok) {

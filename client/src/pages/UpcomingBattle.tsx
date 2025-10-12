@@ -6,10 +6,8 @@ import { useEffect, useState } from "react";
 
 export default function UpcomingBattle({
   battle,
-  auth,
 }: {
   battle: Battle;
-  auth: { jwt: string };
 }) {
   const [copied, setCopied] = useState(false);
   const queryClient = useQueryClient();
@@ -35,8 +33,8 @@ export default function UpcomingBattle({
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.jwt}`,
           },
+          credentials: "include"
         }
       );
       if (!response.ok) {
