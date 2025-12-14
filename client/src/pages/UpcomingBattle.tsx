@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Countdown from "../components/Countdown";
-import { BASE_API_URL } from "../hooks/useAuth";
+import { BASE_API_URL, authFetch } from "../hooks/useAuth";
 import type { Battle, User } from "../types";
 import { useEffect, useState } from "react";
 
@@ -28,13 +28,12 @@ export default function UpcomingBattle({
   const { data: battlePlayers, status } = useQuery<User[]>({
     queryKey: ["battleParticipants", battle.id],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await authFetch(
         `${BASE_API_URL}/api/battle/${battle.id}/participants`,
         {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include"
         }
       );
       if (!response.ok) {

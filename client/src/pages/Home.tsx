@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { BASE_API_URL, useAuth } from "../hooks/useAuth";
+import { BASE_API_URL, useAuth, authFetch } from "../hooks/useAuth";
 
 import type { Battle } from "../types";
 import { useQuery } from "@tanstack/react-query";
@@ -44,9 +44,7 @@ function AuthedHome({ user }: { user: { handle: string } }) {
   const { status, data: battles } = useQuery<Battle[]>({
     queryKey: ["battles"],
     queryFn: async () => {
-      const response = await fetch(BASE_API_URL + "/api/battles", {
-        credentials: "include",
-      });
+      const response = await authFetch(BASE_API_URL + "/api/battles");
 
       if (!response.ok) {
         throw new Error("Failed to fetch battles");
@@ -168,9 +166,8 @@ function BattleCard({
   >({
     queryKey: ["battleParticipants", battle.id],
     queryFn: async () => {
-      const response = await fetch(
-        `${BASE_API_URL}/api/battle/${battle.id}/participants`,
-        { credentials: "include" }
+      const response = await authFetch(
+        `${BASE_API_URL}/api/battle/${battle.id}/participants`
       );
 
       if (!response.ok) {

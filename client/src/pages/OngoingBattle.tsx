@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BASE_API_URL } from "../hooks/useAuth";
+import { BASE_API_URL, authFetch } from "../hooks/useAuth";
 import {
   type Submission,
   type Battle,
@@ -24,15 +24,11 @@ export default function OngoingBattle({
   >({
     queryKey: ["battles", battle.id, "problems"],
     queryFn: async () => {
-      const response = await fetch(
-        `${BASE_API_URL}/api/battle/${battle.id}/problems`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        }
-      );
+      const response = await authFetch(`${BASE_API_URL}/api/battle/${battle.id}/problems`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch battle problems");
       }
@@ -57,15 +53,11 @@ export default function OngoingBattle({
   >({
     queryKey: ["battles", battle.id, "standings"],
     queryFn: async () => {
-      const response = await fetch(
-        `${BASE_API_URL}/api/battle/${battle.id}/standings`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        }
-      );
+      const response = await authFetch(`${BASE_API_URL}/api/battle/${battle.id}/standings`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch battle standings");
       }
@@ -78,15 +70,11 @@ export default function OngoingBattle({
   >({
     queryKey: ["battles", battle.id, "submissions"],
     queryFn: async () => {
-      const response = await fetch(
-        `${BASE_API_URL}/api/battle/${battle.id}/submissions`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        }
-      );
+      const response = await authFetch(`${BASE_API_URL}/api/battle/${battle.id}/submissions`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch battle submissions");
       }

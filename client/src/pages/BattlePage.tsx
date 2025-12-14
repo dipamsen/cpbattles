@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router";
-import { BASE_API_URL, useAuth } from "../hooks/useAuth";
+import { BASE_API_URL, useAuth, authFetch } from "../hooks/useAuth";
 import FinishedBattle from "./FinishedBattle";
 import OngoingBattle from "./OngoingBattle";
 import UpcomingBattle from "./UpcomingBattle";
@@ -18,8 +18,7 @@ export default function BattlePage() {
     queryKey: ["battle", battleId],
     queryFn: async () => {
       if (!auth.authed) throw new Error("Unauthorized");
-      const response = await fetch(`${BASE_API_URL}/api/battle/${battleId}`, {
-        credentials: "include",
+      const response = await authFetch(`${BASE_API_URL}/api/battle/${battleId}`, {
         headers: {
           "Content-Type": "application/json",
         },

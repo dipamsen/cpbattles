@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-import { BASE_API_URL, useAuth } from "../hooks/useAuth";
+import { BASE_API_URL, useAuth, authFetch } from "../hooks/useAuth";
 
 export default function JoinBattle() {
   const { joinCode } = useParams<{ joinCode: string }>();
@@ -18,16 +18,12 @@ export default function JoinBattle() {
       if (!joinCode) {
         throw new Error("Join code is required");
       }
-      const response = await fetch(
-        BASE_API_URL + `/api/battle/join/${joinCode}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include"
-        }
-      );
+      const response = await authFetch(BASE_API_URL + `/api/battle/join/${joinCode}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       const out = await response.json();
       if (!response.ok) {
         throw new Error(

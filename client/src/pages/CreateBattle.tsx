@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { BASE_API_URL, useAuth } from "../hooks/useAuth";
+import { BASE_API_URL, useAuth, authFetch } from "../hooks/useAuth";
 import Button from "../components/Button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import TextInput from "../components/TextInput";
@@ -20,9 +20,8 @@ export default function CreateBattle() {
     }) => {
       if (!auth.authed) throw new Error("Unauthorized");
 
-      const response = await fetch(BASE_API_URL + "/api/create", {
+      const response = await authFetch(BASE_API_URL + "/api/create", {
         method: "POST",
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

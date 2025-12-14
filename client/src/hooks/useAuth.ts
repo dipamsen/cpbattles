@@ -2,6 +2,19 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const BASE_API_URL = import.meta.env.VITE_APP_BACKEND_URL; //"";
 
+export function getToken() {
+  return localStorage.getItem("token");
+}
+
+export async function authFetch(input: RequestInfo, init?: RequestInit) {
+  const token = getToken();
+  const headers = new Headers(init?.headers as any || {});
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  return fetch(input, { ...init, headers });
+}
+
 type AuthResponse =
   | { authed: false; loading: false; error: string }
   | {
@@ -25,9 +38,7 @@ export function useAuth(): AuthResponse {
   >({
     queryKey: ["auth"],
     queryFn: async () => {
-      const response = await fetch(BASE_API_URL + "/auth/me", {
-        credentials: "include",
-      });
+      const response = await authFetch(BASE_API_URL + "/auth/me");
 
       if (!response.ok) {
         return {
@@ -64,10 +75,10 @@ export function useAuth(): AuthResponse {
       authed: true,
       handle: data.handle,
       async logout() {
-        await fetch(BASE_API_URL + "/auth/logout", {
+        await authFetch(BASE_API_URL + "/auth/logout", {
           method: "POST",
-          credentials: "include",
         });
+        localStorage.removeItem("token");
         queryClient.invalidateQueries({
           queryKey: ["auth"],
         });
