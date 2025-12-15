@@ -46,6 +46,7 @@ function AuthedHome({ user }: { user: { handle: string } }) {
   const { status, data: battles } = useQuery<Battle[]>({
     queryKey: ["battles"],
     queryFn: async () => {
+      if (!auth.authed) return [];
       const response = await auth.fetch(BASE_API_URL + "/api/battles");
 
       if (!response.ok) {
@@ -169,6 +170,7 @@ function BattleCard({
   >({
     queryKey: ["battleParticipants", battle.id],
     queryFn: async () => {
+      if (!auth.authed) return [];
       const response = await auth.fetch(
         `${BASE_API_URL}/api/battle/${battle.id}/participants`
       );

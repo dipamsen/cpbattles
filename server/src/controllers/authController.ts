@@ -64,8 +64,6 @@ export const handleCallback: RequestHandler = async (req, res) => {
       req.query as Record<string, string>
     ).toString()}`;
 
-    console.log("Callback query:", req.query);
-
     // Extract code_verifier from the state param we generated earlier.
     const rawState = String(req.query.state || "");
     let code_verifier = "";
@@ -133,7 +131,7 @@ export const handleCallback: RequestHandler = async (req, res) => {
         rating: finalUser.rating,
       },
       jwtSecret,
-      { expiresIn: "7d" }
+      { expiresIn: "28d" }
     );
 
     // Redirect to frontend; put token in fragment so it's not sent to backend.
