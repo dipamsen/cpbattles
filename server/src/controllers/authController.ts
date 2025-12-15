@@ -153,7 +153,3 @@ export const getMe: RequestHandler = async (req, res) => {
     handle: req.user.handle,
   });
 };
-
-export const logout: RequestHandler = (req, res) => {
-  res.json({ message: "Logged out successfully." });
-}
