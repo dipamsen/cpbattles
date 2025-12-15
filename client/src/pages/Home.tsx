@@ -41,12 +41,13 @@ export default function Home() {
 }
 
 function AuthedHome({ user }: { user: { handle: string } }) {
+  const auth = useAuth();
+
   const { status, data: battles } = useQuery<Battle[]>({
     queryKey: ["battles"],
     queryFn: async () => {
-      const response = await fetch(BASE_API_URL + "/api/battles", {
-        credentials: "include",
-      });
+      if (!auth.authed) return [];
+      const response = await auth.fetch(BASE_API_URL + "/api/battles");
 
       if (!response.ok) {
         throw new Error("Failed to fetch battles");
@@ -158,6 +159,7 @@ function BattleCard({
   };
   status: "in_progress" | "pending" | "completed";
 }) {
+  const auth = useAuth();
   const fmt = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -168,9 +170,9 @@ function BattleCard({
   >({
     queryKey: ["battleParticipants", battle.id],
     queryFn: async () => {
-      const response = await fetch(
-        `${BASE_API_URL}/api/battle/${battle.id}/participants`,
-        { credentials: "include" }
+      if (!auth.authed) return [];
+      const response = await auth.fetch(
+        `${BASE_API_URL}/api/battle/${battle.id}/participants`
       );
 
       if (!response.ok) {

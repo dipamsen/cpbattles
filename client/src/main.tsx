@@ -11,6 +11,7 @@ import {
 } from "react-router";
 import { useAuth } from "./hooks/useAuth.ts";
 import CreateBattle from "./pages/CreateBattle.tsx";
+import AuthCallback from "./pages/AuthCallback.tsx";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import BattlePage from "./pages/BattlePage.tsx";
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
         element: <JoinBattle />,
       },
     ],
+  },
+  {
+    path: "auth/callback",
+    element: <AuthCallback />,
   },
   {
     path: "view-problem/:contestId/:index",

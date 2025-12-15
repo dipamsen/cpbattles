@@ -18,8 +18,7 @@ export default function BattlePage() {
     queryKey: ["battle", battleId],
     queryFn: async () => {
       if (!auth.authed) throw new Error("Unauthorized");
-      const response = await fetch(`${BASE_API_URL}/api/battle/${battleId}`, {
-        credentials: "include",
+      const response = await auth.fetch(`${BASE_API_URL}/api/battle/${battleId}`, {
         headers: {
           "Content-Type": "application/json",
         },

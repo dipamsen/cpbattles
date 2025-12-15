@@ -20,9 +20,8 @@ export default function CreateBattle() {
     }) => {
       if (!auth.authed) throw new Error("Unauthorized");
 
-      const response = await fetch(BASE_API_URL + "/api/create", {
+      const response = await auth.fetch(BASE_API_URL + "/api/create", {
         method: "POST",
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

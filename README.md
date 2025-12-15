@@ -12,13 +12,15 @@ This project uses a Node.js backend and a React frontend. The backend is respons
 
 ### Database
 
-1. Set up a PostgreSQL database and a MongoDB database.
-2. Create a database named `cpbattles` in PostgreSQL.
-3. Run the SQL script located in `init.sql` to set up the initial database schema.
+Start the PostgreSQL and MongoDB containers:
+```bash
+cd server
+docker-compose up -d
+```
 
 ### Backend
 
-1. Go to the `backend` directory.
+1. Go to the `server` directory.
 2. Install dependencies:
    ```bash
    npm install
@@ -31,7 +33,7 @@ This project uses a Node.js backend and a React frontend. The backend is respons
 
 ### Frontend
 
-1. Go to the `frontend` directory.
+1. Go to the `client` directory.
 2. Install dependencies:
    ```bash
    npm install

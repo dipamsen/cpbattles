@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 
 export const BASE_API_URL = import.meta.env.VITE_APP_BACKEND_URL; //"";
 
@@ -9,12 +10,22 @@ type AuthResponse =
       loading: false;
       handle: string;
       logout: () => void;
+      fetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>;
     }
   | { authed: false; loading: true }
   | { authed: false; loading: false };
 
 export function useAuth(): AuthResponse {
   const queryClient = useQueryClient();
+  const tokenRef = useRef<string | null>(localStorage.getItem("token"));
+
+  const authFetch = async (input: RequestInfo, init?: RequestInit) => {
+    const headers = new Headers(init?.headers as any || {});
+    if (tokenRef.current) {
+      headers.set("Authorization", `Bearer ${tokenRef.current}`);
+    }
+    return fetch(input, { ...init, headers });
+  };
 
   const { status, data } = useQuery<
     | {
@@ -25,9 +36,9 @@ export function useAuth(): AuthResponse {
   >({
     queryKey: ["auth"],
     queryFn: async () => {
-      const response = await fetch(BASE_API_URL + "/auth/me", {
-        credentials: "include",
-      });
+      // ensure tokenRef is in sync with localStorage (AuthCallback stores token there)
+      tokenRef.current = localStorage.getItem("token");
+      const response = await authFetch(BASE_API_URL + "/auth/me");
 
       if (!response.ok) {
         return {
@@ -63,11 +74,13 @@ export function useAuth(): AuthResponse {
       loading: false,
       authed: true,
       handle: data.handle,
+      fetch: authFetch,
       async logout() {
-        await fetch(BASE_API_URL + "/auth/logout", {
+        await authFetch(BASE_API_URL + "/auth/logout", {
           method: "POST",
-          credentials: "include",
         });
+        localStorage.removeItem("token");
+        tokenRef.current = null;
         queryClient.invalidateQueries({
           queryKey: ["auth"],
         });

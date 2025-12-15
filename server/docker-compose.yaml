@@ -3,13 +3,14 @@ services:
     image: postgres
     container_name: cpbattles-db
     ports:
-      - "3456:5432"
+      - "${DATABASE_PORT}:5432"
     environment:
-      POSTGRES_DB: cpbattles
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql
+      - ../db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   jobs:
     image: mongo

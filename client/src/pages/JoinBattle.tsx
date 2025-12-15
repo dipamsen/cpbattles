@@ -18,16 +18,12 @@ export default function JoinBattle() {
       if (!joinCode) {
         throw new Error("Join code is required");
       }
-      const response = await fetch(
-        BASE_API_URL + `/api/battle/join/${joinCode}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include"
-        }
-      );
+      const response = await auth.fetch(BASE_API_URL + `/api/battle/join/${joinCode}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       const out = await response.json();
       if (!response.ok) {
         throw new Error(

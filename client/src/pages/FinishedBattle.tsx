@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { BASE_API_URL } from "../hooks/useAuth";
+import { BASE_API_URL, useAuth } from "../hooks/useAuth";
 import type { Battle, User, BattleProblem, Submission } from "../types";
 import { differenceInSeconds } from "date-fns";
 
@@ -8,6 +8,7 @@ export default function FinishedBattle({
 }: {
   battle: Battle;
 }) {
+  const auth = useAuth();
   const startTime = new Date(battle.start_time);
   const fmt = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
@@ -31,13 +32,13 @@ export default function FinishedBattle({
   >({
     queryKey: ["battle", battle.id, "standings"],
     queryFn: async () => {
-      const response = await fetch(
+      if (!auth.authed) return [];
+      const response = await auth.fetch(
         `${BASE_API_URL}/api/battle/${battle.id}/standings`,
         {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include"
         }
       );
       if (!response.ok) {
@@ -50,13 +51,13 @@ export default function FinishedBattle({
   const { data: problems, status: problemsStatus } = useQuery<BattleProblem[]>({
     queryKey: ["battles", battle.id, "problems"],
     queryFn: async () => {
-      const response = await fetch(
+      if (!auth.authed) return [];
+      const response = await auth.fetch(
         `${BASE_API_URL}/api/battle/${battle.id}/problems`,
         {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include"
         }
       );
       if (!response.ok) {
@@ -71,13 +72,13 @@ export default function FinishedBattle({
   >({
     queryKey: ["battles", battle.id, "submissions"],
     queryFn: async () => {
-      const response = await fetch(
+      if (!auth.authed) return [];
+      const response = await auth.fetch(
         `${BASE_API_URL}/api/battle/${battle.id}/submissions`,
         {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include"
         }
       );
       if (!response.ok) {
