@@ -14,7 +14,7 @@ import { queries } from "../utils/postgres";
 const REDIRECT_URI =
   process.env.NODE_ENV === "production"
     ? "https://cpbattles-backend-bvhua3hscfavdqfa.centralindia-01.azurewebsites.net/auth/callback"
-    : "http://localhost:5000/auth/callback";
+    : "http://localhost:8080/auth/callback";
 
 export interface CodeforcesUser {
   sub: string;
@@ -30,6 +30,7 @@ export interface CodeforcesUser {
 export const loginWithCodeforces: RequestHandler = async (req, res) => {
   try {
     const config = await getConfig();
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
 
     // Use PKCE but avoid server-side session storage by encoding the
     // code_verifier inside the `state` parameter (base64url JSON).
@@ -46,7 +47,7 @@ export const loginWithCodeforces: RequestHandler = async (req, res) => {
 
     res.redirect(
       buildAuthorizationUrl(config, {
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: `${baseUrl}/auth/callback`,
         scope: "openid profile",
         code_challenge,
         code_challenge_method: "S256",
@@ -62,8 +63,9 @@ export const loginWithCodeforces: RequestHandler = async (req, res) => {
 export const handleCallback: RequestHandler = async (req, res) => {
   try {
     const config = await getConfig();
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
 
-    const callbackUrl = `${REDIRECT_URI}?${new URLSearchParams(
+    const callbackUrl = `${baseUrl}/auth/callback?${new URLSearchParams(
       req.query as Record<string, string>
     ).toString()}`;
 
@@ -142,7 +144,6 @@ export const handleCallback: RequestHandler = async (req, res) => {
     res.redirect(redirectUrl);
   } catch (err) {
     console.log("Callback error:", err);
-    console.error("Raw token response body:", (err as any).cause?.body);
     res.status(500).json({ error: "Something went wrong." });
   }
 };
