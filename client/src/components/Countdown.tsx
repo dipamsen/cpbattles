@@ -20,7 +20,7 @@ export default function Countdown({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [targetTime]);
+  }, [targetTime, onZero]);
 
   return <p className="text-2xl font-bold">{formatTimeLeft(timeLeft)}</p>;
 }
@@ -28,6 +28,9 @@ export default function Countdown({
 function calculateTimeLeft(targetTime: Date) {
   const now = new Date();
   const diff = targetTime.getTime() - now.getTime();
+  if (diff <= 0) {
+    return { hours: 0, minutes: 0, seconds: 0 };
+  }
   const hours = Math.floor(diff / 1000 / 60 / 60);
   const minutes = Math.floor((diff / 1000 / 60) % 60);
   const seconds = Math.floor((diff / 1000) % 60);

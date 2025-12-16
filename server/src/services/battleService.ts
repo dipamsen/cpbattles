@@ -1,9 +1,8 @@
 import { differenceInMinutes, differenceInSeconds } from "date-fns";
 import { db, pool } from "../config/database";
 import { queries, User } from "../utils/postgres";
-import { agenda, pollSubmissions } from "../config/agenda";
+import { agenda, pollSubmissions, isAgendaAvailable } from "../config/agenda";
 import nanoid from "nanoid";
-import { joinBattle } from "../controllers/battleController";
 
 export const battleService = {
   async createBattle(user: User, details: any) {
@@ -31,7 +30,15 @@ export const battleService = {
 
       await db.query(queries.JOIN_BATTLE, [battleId[0].id, user.id], client);
 
-      agenda.schedule(startTime, "battle:start", { battleId: battleId[0].id });
+      if (isAgendaAvailable()) {
+        try {
+          await agenda.schedule(startTime, "battle:start", { battleId: battleId[0].id });
+        } catch (error) {
+          console.warn(`Failed to schedule battle start for battle ${battleId[0].id}:`, error instanceof Error ? error.message : String(error));
+        }
+      } else {
+        console.warn(`Agenda not available - battle ${battleId[0].id} will not auto-start. Use manual start when ready.`);
+      }
       client.query("COMMIT");
       return battleId[0].id;
     } catch (error) {
@@ -232,9 +239,9 @@ export const battleService = {
 
     return standings.toSorted((a, b) => {
       if (a.solved !== b.solved) {
-        return b.solved - a.solved; // Sort by number of problems solved (descending)
+        return b.solved - a.solved;
       }
-      return a.penalty - b.penalty; // Sort by penalty (ascending)
+      return a.penalty - b.penalty;
     });
   },
 
@@ -254,7 +261,7 @@ export const battleService = {
 
     const submissions = await db.getBattleSubmissions(battleId);
     return submissions.toSorted((a, b) => {
-      return a.time.getTime() - b.time.getTime(); // Sort by submission time (ascending)
+      return a.time.getTime() - b.time.getTime();
     });
   },
 
@@ -283,5 +290,138 @@ export const battleService = {
     const problems = await db.getBattleProblems(battleId);
 
     pollSubmissions(battle, problems, participants);
+  },
+
+  async cancelBattle(battleId: number, userId: number) {
+    const battle = await db.getBattleById(battleId);
+    if (!battle) {
+      throw new Error("Battle not found");
+    }
+
+    if (battle.created_by !== userId) {
+      throw new Error("Only the battle creator can cancel the battle");
+    }
+
+    if (battle.status === "completed") {
+      throw new Error("Cannot cancel a completed battle");
+    }
+
+    if (isAgendaAvailable()) {
+      try {
+        await agenda.cancel({ "data.battleId": battleId });
+      } catch (error) {
+        console.warn(`Failed to cancel agenda jobs for battle ${battleId}:`, error instanceof Error ? error.message : String(error));
+      }
+    }
+
+    await db.query(queries.DELETE_BATTLE, [battleId]);
+  },
+
+  async startBattle(battleId: number, userId: number) {
+    const battle = await db.getBattleById(battleId);
+    if (!battle) {
+      throw new Error("Battle not found");
+    }
+
+    if (battle.created_by !== userId) {
+      throw new Error("Only the battle creator can start the battle");
+    }
+
+    if (battle.status !== "pending") {
+      throw new Error(`Battle is already ${battle.status}`);
+    }
+
+    if (isAgendaAvailable()) {
+      throw new Error("Agenda is already running for this battle");
+    }
+
+    const { cf } = await import("../utils/codeforces");
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const participants = await db.getBattleParticipants(battleId);
+
+      const problems = await cf.chooseProblems(
+        battle.min_rating,
+        battle.max_rating,
+        battle.num_problems,
+        participants.map((participant) => participant.handle)
+      );
+
+      for (const problem of problems) {
+        await db.query(
+          queries.INSERT_PROBLEM_TO_BATTLE,
+          [battleId, problem.contestId, problem.index, problem.rating],
+          client
+        );
+      }
+
+      await db.query(queries.START_BATTLE, [battleId], client);
+      console.log(`Battle ${battleId} started successfully (manual)`);
+
+      if (isAgendaAvailable()) {
+        try {
+          await agenda.create("battle:poll-submissions", {
+            battle: battle,
+            problems: problems,
+            participants: participants,
+            battleId: battleId,
+          }).repeatEvery("1 minute").save();
+
+          const endTime = new Date(
+            new Date(battle.start_time).getTime() + battle.duration_min * 60 * 1000
+          );
+          await agenda.schedule(endTime, "battle:end", { battleId: battleId });
+        } catch (error) {
+          console.warn(`Failed to schedule agenda jobs for battle ${battleId}:`, error instanceof Error ? error.message : String(error));
+        }
+      } else {
+        console.warn(`Agenda not available - polling for battle ${battleId} must be done manually via refresh endpoint`);
+      }
+
+      await client.query("COMMIT");
+      return { message: "Battle started successfully" };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  async endBattle(battleId: number, userId: number) {
+    const battle = await db.getBattleById(battleId);
+    if (!battle) {
+      throw new Error("Battle not found");
+    }
+
+    if (battle.created_by !== userId) {
+      throw new Error("Only the battle creator can end the battle");
+    }
+
+    if (battle.status !== "in_progress") {
+      throw new Error(`Battle is already ${battle.status}`);
+    }
+
+    // TODO FIX: Race condition with agenda job
+
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      await db.query(queries.END_BATTLE, [battleId], client);
+      console.log(`Battle ${battleId} ended successfully`);
+
+      await client.query("COMMIT");
+      return { message: "Battle ended successfully" };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 };

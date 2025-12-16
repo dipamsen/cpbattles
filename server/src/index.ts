@@ -24,8 +24,20 @@ app.enable('trust proxy');
 app.use("/auth", authRoutes);
 app.use("/api", battleRoutes);
 
-agenda.on("ready", () => {
-  agenda.start();
+process.on("unhandledRejection", (reason, promise) => {
+  // Suppress MongoDB/Agenda connection errors - they're expected if MongoDB isn't available
+  const reasonStr = reason instanceof Error ? reason.message : String(reason);
+  if (reasonStr.includes("MongoServerSelectionError") || 
+      reasonStr.includes("SSL") ||
+      reasonStr.includes("tlsv1") ||
+      reasonStr.includes("Cannot read properties of undefined")) {
+    return;
+  }
+  console.error("Unhandled Rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
 });
 
 const PORT = process.env.PORT || 5000;

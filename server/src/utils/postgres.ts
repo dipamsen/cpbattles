@@ -14,6 +14,8 @@ export const queries = {
     "UPDATE battles SET status = 'in_progress' WHERE id = $1 RETURNING *",
   END_BATTLE:
     "UPDATE battles SET status = 'completed' WHERE id = $1 RETURNING *",
+  DELETE_BATTLE:
+    "DELETE FROM battles WHERE id = $1 RETURNING *",
   INSERT_PROBLEM_TO_BATTLE:
     "INSERT INTO battle_problems (battle_id, contest_id, index, rating) VALUES ($1, $2, $3, $4) RETURNING id",
   INSERT_SUBMISSION:

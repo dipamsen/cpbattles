@@ -9,6 +9,7 @@ type AuthResponse =
       authed: true;
       loading: false;
       handle: string;
+      userId: number;
       logout: () => void;
       fetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>;
     }
@@ -31,6 +32,7 @@ export function useAuth(): AuthResponse {
     | {
         authed: true;
         handle: string;
+        userId: number;
       }
     | { authed: false }
   >({
@@ -50,6 +52,7 @@ export function useAuth(): AuthResponse {
       return {
         authed: true,
         handle: userData.handle,
+        userId: userData.id,
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -74,6 +77,7 @@ export function useAuth(): AuthResponse {
       loading: false,
       authed: true,
       handle: data.handle,
+      userId: data.userId,
       fetch: authFetch,
       async logout() {
         await authFetch(BASE_API_URL + "/auth/logout", {

@@ -200,3 +200,96 @@ export const refreshSubmissions: RequestHandler = async (req, res) => {
     });
   }
 };
+
+export const cancelBattle: RequestHandler = async (req, res) => {
+  const battleId = parseInt(req.params.id, 10);
+  // @ts-ignore
+  const userId = req.user.id;
+
+  if (isNaN(battleId)) {
+    res.status(400).json({ error: "Invalid battle ID" });
+    return;
+  }
+
+  try {
+    await battleService.cancelBattle(battleId, userId);
+    res.json({ message: "Battle cancelled successfully" });
+  } catch (error) {
+    const statusCode = (error as any).message.includes("not found")
+      ? 404
+      : (error as any).message.includes("Only the battle creator")
+      ? 403
+      : (error as any).message.includes("Cannot cancel")
+      ? 400
+      : 500;
+
+    res.status(statusCode).json({
+      error:
+        "message" in (error as any)
+          ? (error as any).message
+          : "Something went wrong.",
+    });
+  }
+};
+
+export const startBattle: RequestHandler = async (req, res) => {
+  const battleId = parseInt(req.params.id, 10);
+  // @ts-ignore
+  const userId = req.user.id;
+
+  if (isNaN(battleId)) {
+    res.status(400).json({ error: "Invalid battle ID" });
+    return;
+  }
+
+  try {
+    const result = await battleService.startBattle(battleId, userId);
+    res.json(result);
+  } catch (error) {
+    const statusCode = (error as any).message.includes("not found")
+      ? 404
+      : (error as any).message.includes("Only the battle creator")
+      ? 403
+      : (error as any).message.includes("already")
+      ? 400
+      : 500;
+
+    res.status(statusCode).json({
+      error:
+        "message" in (error as any)
+          ? (error as any).message
+          : "Something went wrong.",
+    });
+  }
+};
+
+export const endBattle: RequestHandler = async (req, res) => {
+  const battleId = parseInt(req.params.id, 10);
+  // @ts-ignore
+  const userId = req.user.id;
+
+  if (isNaN(battleId)) {
+    res.status(400).json({ error: "Invalid battle ID" });
+    return;
+  }
+
+  try {
+    await battleService.endBattle(battleId, userId);
+    res.json({ message: "Battle ended successfully" });
+  } catch (error) {
+    const statusCode = (error as any).message.includes("not found")
+      ? 404
+      : (error as any).message.includes("Only the battle creator")
+      ? 403
+      : (error as any).message.includes("Cannot end")
+      ? 400
+      : 500;
+
+    res.status(statusCode).json({
+      error:
+        "message" in (error as any)
+          ? (error as any).message
+          : "Something went wrong.",
+    });
+  }
+};

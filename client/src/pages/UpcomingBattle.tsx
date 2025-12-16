@@ -3,6 +3,7 @@ import Countdown from "../components/Countdown";
 import { BASE_API_URL, useAuth } from "../hooks/useAuth";
 import type { Battle, User } from "../types";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
 export default function UpcomingBattle({
   battle,
@@ -11,7 +12,92 @@ export default function UpcomingBattle({
 }) {
   const auth = useAuth();
   const [copied, setCopied] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [starting, setStarting] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const isCreator = auth.authed && auth.userId === battle.created_by;
+  const startTime = new Date(battle.start_time);
+  const [hasPassedStartTime, setHasPassedStartTime] = useState(false);
+  const [showStart, setShowStart] = useState(false);
+
+  useEffect(() => {
+    const checkTime = () => {
+      const now = new Date();
+      const passed = now >= startTime;
+      setHasPassedStartTime(passed);
+      if (passed && battle.status === "pending") {
+        queryClient.refetchQueries({ queryKey: ["battle", battle.id.toString()] });
+        if (!hasPassedStartTime) {
+          setTimeout(() => setShowStart(true), 5000);
+        }
+      }
+    };
+
+    checkTime();
+    const interval = setInterval(checkTime, 1000);
+    return () => clearInterval(interval);
+  }, [startTime, battle.status, battle.id, queryClient]);
+
+  const handleStart = async () => {
+    setStarting(true);
+    try {
+      if (!auth.authed) return;
+      const response = await auth.fetch(
+        `${BASE_API_URL}/api/battle/${battle.id}/start`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to start battle");
+      }
+
+      await queryClient.refetchQueries({ queryKey: ["battle", battle.id.toString()] });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to start battle");
+      setStarting(false);
+      queryClient.invalidateQueries({ queryKey: ["battle", battle.id.toString()] });
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!confirm("Are you sure you want to cancel this battle? This action cannot be undone.")) {
+      return;
+    }
+
+    setCancelling(true);
+    try {
+      if (!auth.authed) return;
+      const response = await auth.fetch(
+        `${BASE_API_URL}/api/battle/${battle.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to cancel battle");
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["battles"] });
+      navigate("/");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to cancel battle");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   useEffect(() => {
     if (copied) {
@@ -20,7 +106,6 @@ export default function UpcomingBattle({
     }
   }, [copied]);
 
-  const startTime = new Date(battle.start_time);
   const fmt = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -70,13 +155,33 @@ export default function UpcomingBattle({
 
       {/* countdown */}
       <div className="text-center mt-4">
-        <h2 className="text-xl font-semibold mb-2">Battle starts in</h2>
+        <h2 className="text-xl font-semibold mb-2">
+          {hasPassedStartTime ? "Battle starting soon" : "Battle starts in"}
+        </h2>
         <Countdown
           targetTime={startTime}
-          onZero={() => {
-            queryClient.invalidateQueries({ queryKey: ["battle", battle.id] });
-          }}
+          onZero={() => {}}
         />
+        <div className="mt-4 flex gap-4 justify-center">
+          {isCreator && showStart && battle.status === "pending" && (
+            <button
+              onClick={handleStart}
+              disabled={starting}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {starting ? "Starting..." : "Start Battle Now"}
+            </button>
+          )}
+          {isCreator && (
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {cancelling ? "Cancelling..." : "Cancel Battle"}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-4 flex gap-12 flex-col lg:flex-row">
