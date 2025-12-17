@@ -1,6 +1,7 @@
 import { differenceInMinutes, differenceInSeconds } from "date-fns";
 import { db, pool } from "../config/database";
 import { queries, User } from "../utils/postgres";
+import { cf } from "../utils/codeforces";
 import { agenda, pollSubmissions, isAgendaAvailable } from "../config/agenda";
 import nanoid from "nanoid";
 
@@ -332,10 +333,9 @@ export const battleService = {
     }
 
     if (isAgendaAvailable()) {
-      throw new Error("Agenda is already running for this battle");
+      throw new Error("Battle is starting, please wait");
     }
 
-    const { cf } = await import("../utils/codeforces");
     const client = await pool.connect();
 
     try {

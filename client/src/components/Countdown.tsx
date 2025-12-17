@@ -12,6 +12,7 @@ export default function Countdown({
   const serverTimeRef = useRef<number | null>(null);
   const performanceTimeRef = useRef<number>(0);
   const hasCalledOnZero = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // fetch server time on loading
@@ -25,10 +26,14 @@ export default function Countdown({
         const networkLatency = (afterRequest - beforeRequest) / 2;
         performanceTimeRef.current = beforeRequest + networkLatency;
         serverTimeRef.current = data.serverTime;
+        setTimeLeft(calculateTimeLeft(targetTime, serverTimeRef.current!));
+        setIsLoading(false);
       } catch (error) {
         console.warn("Failed to fetch server time, falling back to local time:", error);
         performanceTimeRef.current = performance.now();
         serverTimeRef.current = Date.now();
+        setTimeLeft(calculateTimeLeft(targetTime, serverTimeRef.current));
+        setIsLoading(false);
       }
     };
 
@@ -54,7 +59,7 @@ export default function Countdown({
     return () => clearInterval(interval);
   }, [targetTime, onZero]);
 
-  return <p className="text-2xl font-bold">{formatTimeLeft(timeLeft)}</p>;
+  return <p className="text-2xl font-bold">{isLoading ? "Loading..." : formatTimeLeft(timeLeft)}</p>;
 }
 
 function calculateTimeLeft(targetTime: Date, currentServerTime: number) {
