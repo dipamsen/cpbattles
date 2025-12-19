@@ -11,8 +11,8 @@ export const authenticateSession: RequestHandler = async (req, res, next) => {
   const token = auth.slice("Bearer ".length);
   try {
     const secret = process.env.JWT_SECRET || "jwtsecret";
-    const decoded = jwt.verify(token, secret) as any;
-    if (!decoded || !decoded.sub) {
+    const decoded = jwt.verify(token, secret);
+    if (!decoded || !decoded.sub || typeof decoded == "string") {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
@@ -23,7 +23,6 @@ export const authenticateSession: RequestHandler = async (req, res, next) => {
       return;
     }
 
-    // @ts-ignore
     req.user = user;
     next();
   } catch (e) {

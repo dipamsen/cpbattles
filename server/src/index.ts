@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { agenda } from "./config/agenda";
 import authRoutes from "./routes/auth";
 import battleRoutes from "./routes/battles";
+import { errorHandler } from "./middleware/errorHandler";
 
 dotenv.config();
 
@@ -23,11 +24,11 @@ app.use(
 app.enable('trust proxy'); 
 app.use("/auth", authRoutes);
 app.use("/api", battleRoutes);
-
-// Server side endpoint for fetching current server time
 app.get("/time", (_req, res) => {
   res.json({ serverTime: Date.now() });
 });
+
+app.use(errorHandler);
 
 process.on("unhandledRejection", (reason, promise) => {
   // Suppress MongoDB/Agenda connection errors - they're expected if MongoDB isn't available

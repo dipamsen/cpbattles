@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import { BattleCreationDetails } from "../controllers/battleController";
 
 export const validateHandle: RequestHandler = (req, res, next) => {
   const { handle } = req.body;
@@ -12,7 +13,7 @@ export const validateHandle: RequestHandler = (req, res, next) => {
 };
 
 export const validateBattleCreation: RequestHandler = (req, res, next) => {
-  const details = req.body;
+  const details: BattleCreationDetails = req.body;
 
   if (
     !details ||

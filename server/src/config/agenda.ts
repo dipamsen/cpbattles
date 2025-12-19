@@ -147,7 +147,8 @@ export async function pollSubmissions(
           new Date(battle.start_time).getTime() / 1000 &&
         sub.creationTimeSeconds <= endTime.getTime() / 1000 &&
         !storedSubmissionIds.has(sub.id.toString()) &&
-        sub.verdict != "TESTING"
+        sub.verdict != "TESTING" &&
+        sub.verdict
     );
 
     if (newSubmissions.length === 0) {

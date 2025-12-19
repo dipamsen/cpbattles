@@ -1,144 +1,108 @@
+import { AppError } from "../errors/AppError";
 import { battleService } from "../services/battleService";
 import { RequestHandler } from "express";
 
-export const createBattle: RequestHandler = async (req, res) => {
+export interface BattleCreationDetails {
+  name: string;
+  startTime: number;
+  duration: number;
+  minRating: number;
+  maxRating: number;
+  problemCount: number;
+}
+
+export const createBattle: RequestHandler = async (req, res, next) => {
   try {
-    // @ts-ignore
-    const battleId = await battleService.createBattle(req.user, req.body);
+    const battleId = await battleService.createBattle(
+      req.user,
+      req.body as BattleCreationDetails
+    );
     res.json({ battleId });
-  } catch (error) {
-    res.status(400).json({
-      error:
-        "message" in (error as any) ? (error as any).message : "Unknown error",
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-export const getUserBattles: RequestHandler = async (req, res) => {
-  // @ts-ignore
+export const getUserBattles: RequestHandler = async (req, res, next) => {
   const user = req.user;
   try {
     const battles = await battleService.getUserBattles(user.id);
     res.json(battles);
-  } catch (error) {
-    res.status(500).json({
-      error:
-        "message" in (error as any)
-          ? (error as any).message
-          : "Something went wrong.",
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-export const getBattle: RequestHandler = async (req, res) => {
-  const battleId = parseInt(req.params.id, 10);
-
-  if (isNaN(battleId)) {
-    res.status(400).json({ error: "Invalid battle ID" });
-    return;
-  }
-
+export const getBattle: RequestHandler = async (req, res, next) => {
   try {
-    const result = await battleService.getBattle(
-      battleId,
-      // @ts-ignore
-      req.user.id
-    );
+    const battleId = parseInt(req.params.id, 10);
+
+    if (isNaN(battleId)) {
+      throw new AppError("Invalid battle ID", 400);
+    }
+
+    const result = await battleService.getBattle(battleId, req.user.id);
     res.json(result);
-  } catch (error) {
-    const statusCode = (error as any).message.includes("not found")
-      ? 404
-      : (error as any).message.includes("not allowed")
-      ? 403
-      : 500;
-
-    res.status(statusCode).json({
-      error:
-        "message" in (error as any)
-          ? (error as any).message
-          : "Something went wrong.",
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-export const getBattleParticipants: RequestHandler = async (req, res) => {
-  const battleId = parseInt(req.params.id, 10);
-  // @ts-ignore
-  const userId = req.user.id;
-  if (isNaN(battleId)) {
-    res.status(400).json({ error: "Invalid battle ID" });
-    return;
-  }
-
+export const getBattleParticipants: RequestHandler = async (req, res, next) => {
   try {
+    const battleId = parseInt(req.params.id, 10);
+    const userId = req.user.id;
+    if (isNaN(battleId)) {
+      throw new AppError("Invalid battle ID", 400);
+    }
+
     const participants = await battleService.getBattleParticipants(
       battleId,
       userId
     );
     res.json(participants);
-  } catch (error) {
-    res.status(500).json({
-      error:
-        "message" in (error as any)
-          ? (error as any).message
-          : "Something went wrong.",
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-export const getBattleProblems: RequestHandler = async (req, res) => {
+export const getBattleProblems: RequestHandler = async (req, res, next) => {
   const battleId = parseInt(req.params.id, 10);
-  // @ts-ignore
   const userId = req.user.id;
   if (isNaN(battleId)) {
-    res.status(400).json({ error: "Invalid battle ID" });
-    return;
+    return next(new AppError("Invalid battle ID", 400));
   }
 
   try {
     const problems = await battleService.getBattleProblems(battleId, userId);
     res.json(problems);
   } catch (error) {
-    res.status(500).json({
-      error:
-        "message" in (error as any)
-          ? (error as any).message
-          : "Something went wrong.",
-    });
+    next(error);
   }
 };
 
-export const getBattleStandings: RequestHandler = async (req, res) => {
+export const getBattleStandings: RequestHandler = async (req, res, next) => {
   const battleId = parseInt(req.params.id, 10);
-  // @ts-ignore
   const userId = req.user.id;
 
   if (isNaN(battleId)) {
-    res.status(400).json({ error: "Invalid battle ID" });
-    return;
+    return next(new AppError("Invalid battle ID", 400));
   }
 
   try {
     const standings = await battleService.getBattleStandings(battleId, userId);
     res.json(standings);
   } catch (error) {
-    res.status(500).json({
-      error:
-        "message" in (error as any)
-          ? (error as any).message
-          : "Something went wrong.",
-    });
+    next(error);
   }
 };
 
-export const getBattleSubmissions: RequestHandler = async (req, res) => {
+export const getBattleSubmissions: RequestHandler = async (req, res, next) => {
   const battleId = parseInt(req.params.id, 10);
-  // @ts-ignore
   const userId = req.user.id;
 
   if (isNaN(battleId)) {
-    res.status(400).json({ error: "Invalid battle ID" });
-    return;
+    return next(new AppError("Invalid battle ID", 400));
   }
 
   try {
@@ -148,148 +112,86 @@ export const getBattleSubmissions: RequestHandler = async (req, res) => {
     );
     res.json(submissions);
   } catch (error) {
-    res.status(500).json({
-      error:
-        "message" in (error as any)
-          ? (error as any).message
-          : "Something went wrong.",
-    });
+    next(error);
   }
 };
 
-export const joinBattle: RequestHandler = async (req, res) => {
+export const joinBattle: RequestHandler = async (req, res, next) => {
   const joinToken = req.params.joinToken;
-  // @ts-ignore
   const userId = req.user.id;
 
   if (!joinToken) {
-    res.status(400).json({ error: "Join token is required" });
-    return;
+    return next(new AppError("Join token is required", 400));
   }
 
   try {
     const battleId = await battleService.joinBattle(joinToken, userId);
     res.json({ battleId });
-  } catch (error) {
-    res.status(400).json({
-      error:
-        "message" in (error as any) ? (error as any).message : "Unknown error",
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-export const refreshSubmissions: RequestHandler = async (req, res) => {
+export const refreshSubmissions: RequestHandler = async (req, res, next) => {
   const battleId = parseInt(req.params.id, 10);
-  // @ts-ignore
   const userId = req.user.id;
 
   if (isNaN(battleId)) {
-    res.status(400).json({ error: "Invalid battle ID" });
-    return;
+    return next(new AppError("Invalid battle ID", 400));
   }
 
   try {
     await battleService.refreshSubmissions(battleId, userId);
     res.json({ message: "Submissions refreshed successfully" });
   } catch (error) {
-    res.status(500).json({
-      error:
-        "message" in (error as any)
-          ? (error as any).message
-          : "Something went wrong.",
-    });
+    next(error);
   }
 };
 
-export const cancelBattle: RequestHandler = async (req, res) => {
+export const cancelBattle: RequestHandler = async (req, res, next) => {
   const battleId = parseInt(req.params.id, 10);
-  // @ts-ignore
   const userId = req.user.id;
 
   if (isNaN(battleId)) {
-    res.status(400).json({ error: "Invalid battle ID" });
-    return;
+    return next(new AppError("Invalid battle ID", 400));
   }
 
   try {
     await battleService.cancelBattle(battleId, userId);
     res.json({ message: "Battle cancelled successfully" });
-  } catch (error) {
-    const statusCode = (error as any).message.includes("not found")
-      ? 404
-      : (error as any).message.includes("Only the battle creator")
-      ? 403
-      : (error as any).message.includes("Cannot cancel")
-      ? 400
-      : 500;
-
-    res.status(statusCode).json({
-      error:
-        "message" in (error as any)
-          ? (error as any).message
-          : "Something went wrong.",
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-export const startBattle: RequestHandler = async (req, res) => {
+export const startBattle: RequestHandler = async (req, res, next) => {
   const battleId = parseInt(req.params.id, 10);
-  // @ts-ignore
   const userId = req.user.id;
 
   if (isNaN(battleId)) {
-    res.status(400).json({ error: "Invalid battle ID" });
-    return;
+    return next(new AppError("Invalid battle ID", 400));
   }
 
   try {
     const result = await battleService.startBattle(battleId, userId);
     res.json(result);
-  } catch (error) {
-    const statusCode = (error as any).message.includes("not found")
-      ? 404
-      : (error as any).message.includes("Only the battle creator")
-      ? 403
-      : (error as any).message.includes("already")
-      ? 400
-      : 500;
-
-    res.status(statusCode).json({
-      error:
-        "message" in (error as any)
-          ? (error as any).message
-          : "Something went wrong.",
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-export const endBattle: RequestHandler = async (req, res) => {
+export const endBattle: RequestHandler = async (req, res, next) => {
   const battleId = parseInt(req.params.id, 10);
-  // @ts-ignore
   const userId = req.user.id;
 
   if (isNaN(battleId)) {
-    res.status(400).json({ error: "Invalid battle ID" });
-    return;
+    return next(new AppError("Invalid battle ID", 400));
   }
 
   try {
     await battleService.endBattle(battleId, userId);
     res.json({ message: "Battle ended successfully" });
-  } catch (error) {
-    const statusCode = (error as any).message.includes("not found")
-      ? 404
-      : (error as any).message.includes("Only the battle creator")
-      ? 403
-      : (error as any).message.includes("Cannot end")
-      ? 400
-      : 500;
-
-    res.status(statusCode).json({
-      error:
-        "message" in (error as any)
-          ? (error as any).message
-          : "Something went wrong.",
-    });
+  } catch (err) {
+    next(err);
   }
 };

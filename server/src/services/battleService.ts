@@ -4,9 +4,23 @@ import { queries, User } from "../utils/postgres";
 import { cf } from "../utils/codeforces";
 import { agenda, pollSubmissions, isAgendaAvailable } from "../config/agenda";
 import nanoid from "nanoid";
+import {
+  BattleAlreadyStartedError,
+  BattleJoinTokenInvalidError,
+  BattleStartInProgressError,
+} from "../errors/BattleErrors";
+import { AppError } from "../errors/AppError";
+import { getBattleAsCreator, getBattleWithAccess } from "./guards/battleGuards";
+import {
+  assertInProgress,
+  assertNotCompleted,
+  assertPending,
+  assertStarted,
+} from "./guards/battleState";
+import { BattleCreationDetails } from "../controllers/battleController";
 
 export const battleService = {
-  async createBattle(user: User, details: any) {
+  async createBattle(user: User, details: BattleCreationDetails) {
     const startTime = new Date(details.startTime);
 
     const client = await pool.connect();
@@ -33,19 +47,27 @@ export const battleService = {
 
       if (isAgendaAvailable()) {
         try {
-          await agenda.schedule(startTime, "battle:start", { battleId: battleId[0].id });
+          await agenda.schedule(startTime, "battle:start", {
+            battleId: battleId[0].id,
+          });
         } catch (error) {
-          console.warn(`Failed to schedule battle start for battle ${battleId[0].id}:`, error instanceof Error ? error.message : String(error));
+          console.warn(
+            `Failed to schedule battle start for battle ${battleId[0].id}:`,
+            error instanceof Error ? error.message : String(error)
+          );
         }
       } else {
-        console.warn(`Agenda not available - battle ${battleId[0].id} will not auto-start. Use manual start when ready.`);
+        console.warn(
+          `Agenda not available - battle ${battleId[0].id} will not auto-start. Use manual start when ready.`
+        );
       }
       client.query("COMMIT");
       return battleId[0].id;
     } catch (error) {
       await client.query("ROLLBACK");
-      throw new Error(
-        "message" in (error as any) ? (error as any).message : "Unknown error"
+      throw new AppError(
+        error instanceof Error ? error.message : "Failed to create battle",
+        400
       );
     }
   },
@@ -53,10 +75,10 @@ export const battleService = {
   async joinBattle(joinToken: string, userId: number) {
     const battle = await db.getBattleByJoinToken(joinToken);
     if (!battle) {
-      throw new Error("Battle not found or join token is invalid");
+      throw new BattleJoinTokenInvalidError();
     }
     if (battle.status !== "pending") {
-      throw new Error("You can only join battles that have not started yet");
+      throw new BattleAlreadyStartedError();
     }
     const participants = await db.getBattleParticipants(battle.id);
     if (participants.some((p) => p.id === userId)) {
@@ -76,78 +98,29 @@ export const battleService = {
   },
 
   async getBattle(battleId: number, userId: number) {
-    const battle = await db.getBattleById(battleId);
-    if (!battle) {
-      throw new Error("Battle not found");
-    }
-
-    const participants = await db.getBattleParticipants(battleId);
-    if (
-      battle.created_by !== userId &&
-      participants.every((p) => p.id !== userId)
-    ) {
-      throw new Error("You are not allowed to view this battle");
-    }
+    const battle = await getBattleWithAccess(battleId, userId);
 
     return battle;
   },
 
   async getBattleParticipants(battleId: number, userId: number) {
-    const battle = await db.getBattleById(battleId);
-    if (!battle) {
-      throw new Error("Battle not found");
-    }
-
+    await getBattleWithAccess(battleId, userId);
     const participants = await db.getBattleParticipants(battleId);
-    if (
-      battle.created_by !== userId &&
-      participants.every((p) => p.id !== userId)
-    ) {
-      throw new Error("You are not allowed to view this battle");
-    }
 
     return participants;
   },
 
   async getBattleProblems(battleId: number, userId: number) {
-    const battle = await db.getBattleById(battleId);
-    if (!battle) {
-      throw new Error("Battle not found");
-    }
-
-    if (battle.status === "pending") {
-      throw new Error("Problems are only available after the battle starts");
-    }
-
-    const participants = await db.getBattleParticipants(battleId);
-    if (
-      battle.created_by !== userId &&
-      participants.every((p) => p.id !== userId)
-    ) {
-      throw new Error("You are not allowed to view this battle");
-    }
+    const battle = await getBattleWithAccess(battleId, userId);
+    assertStarted(battle, "Problems");
 
     const problems = await db.getBattleProblems(battleId);
     return problems;
   },
 
   async getBattleStandings(battleId: number, userId: number) {
-    const battle = await db.getBattleById(battleId);
-    if (!battle) {
-      throw new Error("Battle not found");
-    }
-
-    const participants = await db.getBattleParticipants(battleId);
-    if (
-      battle.created_by !== userId &&
-      participants.every((p) => p.id !== userId)
-    ) {
-      throw new Error("You are not allowed to view this battle");
-    }
-
-    if (battle.status === "pending") {
-      throw new Error("Standings are only available after the battle starts");
-    }
+    const battle = await getBattleWithAccess(battleId, userId);
+    assertStarted(battle, "Standings");
 
     const startTime = battle.start_time;
 
@@ -247,18 +220,8 @@ export const battleService = {
   },
 
   async getBattleSubmissions(battleId: number, userId: number) {
-    const battle = await db.getBattleById(battleId);
-    if (!battle) {
-      throw new Error("Battle not found");
-    }
-
-    const participants = await db.getBattleParticipants(battleId);
-    if (
-      battle.created_by !== userId &&
-      participants.every((p) => p.id !== userId)
-    ) {
-      throw new Error("You are not allowed to view this battle");
-    }
+    const battle = await getBattleWithAccess(battleId, userId);
+    assertStarted(battle, "Submissions");
 
     const submissions = await db.getBattleSubmissions(battleId);
     return submissions.toSorted((a, b) => {
@@ -267,51 +230,26 @@ export const battleService = {
   },
 
   async refreshSubmissions(battleId: number, userId: number) {
-    const battle = await db.getBattleById(battleId);
-    if (!battle) {
-      throw new Error("Battle not found");
-    }
+    const battle = await getBattleWithAccess(battleId, userId);
+    assertInProgress(battle);
 
     const participants = await db.getBattleParticipants(battleId);
-    if (
-      battle.created_by !== userId &&
-      participants.every((p) => p.id !== userId)
-    ) {
-      throw new Error(
-        "You are not allowed to refresh submissions for this battle"
-      );
-    }
-
-    if (battle.status !== "in_progress") {
-      throw new Error(
-        "Submissions can only be refreshed during an active battle"
-      );
-    }
-
     const problems = await db.getBattleProblems(battleId);
-
     await pollSubmissions(battle, problems, participants);
   },
 
   async cancelBattle(battleId: number, userId: number) {
-    const battle = await db.getBattleById(battleId);
-    if (!battle) {
-      throw new Error("Battle not found");
-    }
-
-    if (battle.created_by !== userId) {
-      throw new Error("Only the battle creator can cancel the battle");
-    }
-
-    if (battle.status === "completed") {
-      throw new Error("Cannot cancel a completed battle");
-    }
+    const battle = await getBattleAsCreator(battleId, userId);
+    assertNotCompleted(battle);
 
     if (isAgendaAvailable()) {
       try {
         await agenda.cancel({ "data.battleId": battleId });
       } catch (error) {
-        console.warn(`Failed to cancel agenda jobs for battle ${battleId}:`, error instanceof Error ? error.message : String(error));
+        console.warn(
+          `Failed to cancel agenda jobs for battle ${battleId}:`,
+          error instanceof Error ? error.message : String(error)
+        );
       }
     }
 
@@ -319,21 +257,11 @@ export const battleService = {
   },
 
   async startBattle(battleId: number, userId: number) {
-    const battle = await db.getBattleById(battleId);
-    if (!battle) {
-      throw new Error("Battle not found");
-    }
-
-    if (battle.created_by !== userId) {
-      throw new Error("Only the battle creator can start the battle");
-    }
-
-    if (battle.status !== "pending") {
-      throw new Error(`Battle is already ${battle.status}`);
-    }
+    const battle = await getBattleAsCreator(battleId, userId);
+    assertPending(battle);
 
     if (isAgendaAvailable()) {
-      throw new Error("Battle is starting, please wait");
+      throw new BattleStartInProgressError();
     }
 
     const client = await pool.connect();
@@ -363,22 +291,31 @@ export const battleService = {
 
       if (isAgendaAvailable()) {
         try {
-          await agenda.create("battle:poll-submissions", {
-            battle: battle,
-            problems: problems,
-            participants: participants,
-            battleId: battleId,
-          }).repeatEvery("1 minute").save();
+          await agenda
+            .create("battle:poll-submissions", {
+              battle: battle,
+              problems: problems,
+              participants: participants,
+              battleId: battleId,
+            })
+            .repeatEvery("1 minute")
+            .save();
 
           const endTime = new Date(
-            new Date(battle.start_time).getTime() + battle.duration_min * 60 * 1000
+            new Date(battle.start_time).getTime() +
+              battle.duration_min * 60 * 1000
           );
           await agenda.schedule(endTime, "battle:end", { battleId: battleId });
         } catch (error) {
-          console.warn(`Failed to schedule agenda jobs for battle ${battleId}:`, error instanceof Error ? error.message : String(error));
+          console.warn(
+            `Failed to schedule agenda jobs for battle ${battleId}:`,
+            error instanceof Error ? error.message : String(error)
+          );
         }
       } else {
-        console.warn(`Agenda not available - polling for battle ${battleId} must be done manually via refresh endpoint`);
+        console.warn(
+          `Agenda not available - polling for battle ${battleId} must be done manually via refresh endpoint`
+        );
       }
 
       await client.query("COMMIT");
@@ -392,18 +329,8 @@ export const battleService = {
   },
 
   async endBattle(battleId: number, userId: number) {
-    const battle = await db.getBattleById(battleId);
-    if (!battle) {
-      throw new Error("Battle not found");
-    }
-
-    if (battle.created_by !== userId) {
-      throw new Error("Only the battle creator can end the battle");
-    }
-
-    if (battle.status !== "in_progress") {
-      throw new Error(`Battle is already ${battle.status}`);
-    }
+    const battle = await getBattleAsCreator(battleId, userId);
+    assertInProgress(battle);
 
     // TODO FIX: Race condition with agenda job
 

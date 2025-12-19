@@ -150,9 +150,7 @@ export const handleCallback: RequestHandler = async (req, res) => {
 
 export const getMe: RequestHandler = async (req, res) => {
   res.json({
-    // @ts-ignore
     id: req.user.id,
-    // @ts-ignore
     handle: req.user.handle,
   });
 };

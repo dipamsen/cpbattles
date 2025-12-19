@@ -71,7 +71,7 @@ export class DatabaseClient {
   }
 
   async getUserBySub(sub: string) {
-    const result = await this.query("SELECT * FROM users WHERE sub = $1", [
+    const result = await this.query<User>("SELECT * FROM users WHERE sub = $1", [
       sub,
     ]);
     return result.length > 0 ? result[0] : null;
