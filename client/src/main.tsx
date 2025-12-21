@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import Home from "./pages/Home.tsx";
+import Footer from "./components/Footer.tsx";
 
 import {
   createBrowserRouter,
@@ -9,7 +10,10 @@ import {
   Outlet,
   RouterProvider,
 } from "react-router";
-import { useAuth } from "./hooks/useAuth.ts";
+
+// FIX 1: Import AuthProvider here
+import { useAuth, AuthProvider } from "./hooks/useAuth"; 
+
 import CreateBattle from "./pages/CreateBattle.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
 
@@ -55,7 +59,9 @@ function Layout() {
   const auth = useAuth();
 
   return (
-    <div className="bg-gradient-to-br from-orange-100 to-emerald-100 min-h-screen flex flex-col items-start font-custom">
+    <div className="bg-gradient-to-br from-orange-100 to-emerald-100 min-h-screen flex flex-col font-custom w-full overflow-x-hidden">
+      
+      {/* Navbar Section */}
       <div className="flex items-center py-4 mx-auto max-w-7xl w-[90%] flex-0 flex-col md:flex-row">
         <div className="flex items-center">
           <img src="/logo.svg" alt="Logo" className="h-15 w-15 mr-2" />
@@ -79,7 +85,14 @@ function Layout() {
           </div>
         )}
       </div>
-      <Outlet />
+
+      {/* Main Content Area */}
+      <div className="w-full flex-1 flex flex-col items-center">
+        <Outlet />
+      </div>
+
+      {/* Footer Section */}
+      <Footer />
     </div>
   );
 }
@@ -88,7 +101,6 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 2,
-      // staleTime: 10 * 1000,
     },
   },
 });
@@ -96,7 +108,10 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      {/* FIX 2: WRAP THE APP WITH AUTHPROVIDER */}
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>
 );
