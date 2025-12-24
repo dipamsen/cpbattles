@@ -6,8 +6,7 @@ import React, {
   useCallback,
 } from "react";
 
-// FIX: Default to localhost:8081 if env is missing
-export const BASE_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8081";
+export const BASE_API_URL = import.meta.env.VITE_API_URL;
 
 interface User {
   id: string;
