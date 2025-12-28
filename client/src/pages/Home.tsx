@@ -1,6 +1,7 @@
 import { Link } from "react-router";
-// FIX 1: Bring back useAuth to show "Loading..." screen
 import { BASE_API_URL, useAuth } from "../hooks/useAuth";
+import type { Battle } from "../types";
+import { useQuery } from "@tanstack/react-query";
 import Footer from "../components/Footer";
 
 // --- ICONS ---
@@ -23,13 +24,11 @@ const UsersIcon = () => (
 );
 
 export default function Home() {
-  const auth = useAuth(); // Hook to check login status
+  const auth = useAuth();
 
   return (
-    // FIX 2: Root div has NO padding, so Footer can touch edges
     <div className="flex flex-col min-h-screen w-full">
-      
-      {/* Loading Screen (Visible only when checking auth) */}
+      {/* Loading Screen */}
       {auth.loading && (
         <div className="flex-grow flex flex-col items-center justify-center min-h-[60vh]">
           <div className="text-2xl font-bold text-gray-500 animate-pulse flex items-center gap-3">
@@ -38,15 +37,16 @@ export default function Home() {
         </div>
       )}
 
-      {/* Main Content (Only visible when NOT loading) */}
-      {!auth.loading && (
+      {/* Authenticated View (Dashboard) */}
+      {auth.authed && <AuthedHome user={auth} />}
+
+      {/* Guest View (Landing Page) */}
+      {!auth.loading && !auth.authed && (
         <div className="flex flex-col flex-grow">
-            
-            {/* Content Wrapper - PADDING IS HERE (px-4) */}
-            <div className="flex flex-col items-center w-full max-w-7xl mx-auto px-4 flex-grow justify-center">
+            <div className="flex flex-col items-center w-full max-w-7xl mx-auto px-4 flex-grow justify-center py-12">
                 
                 {/* Hero Section */}
-                <div className="text-center mt-16 max-w-3xl">
+                <div className="text-center mt-8 max-w-3xl">
                     <div className="flex items-center justify-center gap-4 mb-6">
                         <span className="text-6xl animate-bounce">⚔️</span>
                         <h1 className="text-5xl md:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
@@ -59,8 +59,9 @@ export default function Home() {
                         Clash with friends in real-time Codeforces battles!
                     </p>
 
+                    {/* FIX: Changed Link from /auth/codeforces to /auth/login */}
                     <a
-                        href={BASE_API_URL + "/auth/codeforces"}
+                        href={BASE_API_URL + "/auth/login"}
                         className="bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 inline-block"
                     >
                         Login with Codeforces
@@ -68,20 +69,20 @@ export default function Home() {
                 </div>
 
                 {/* Features Grid */}
-                <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 w-full mb-16">
-                    <div className="bg-white/50 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20 hover:shadow-2xl transition-all hover:-translate-y-2">
+                <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 w-full mb-12">
+                    <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all hover:-translate-y-2">
                         <SwordIcon />
                         <h3 className="text-xl font-bold text-gray-800 mb-2">1v1 Battles</h3>
                         <p className="text-gray-600">Challenge your friends to coding duels. Pick a difficulty, set a timer, and see who solves it first.</p>
                     </div>
 
-                    <div className="bg-white/50 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20 hover:shadow-2xl transition-all hover:-translate-y-2">
+                    <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all hover:-translate-y-2">
                         <GlobeIcon />
                         <h3 className="text-xl font-bold text-gray-800 mb-2">Codeforces Sync</h3>
                         <p className="text-gray-600">Seamlessly integrated with Codeforces. Problems are fetched directly from the official problemset.</p>
                     </div>
 
-                    <div className="bg-white/50 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20 hover:shadow-2xl transition-all hover:-translate-y-2">
+                    <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all hover:-translate-y-2">
                         <UsersIcon />
                         <h3 className="text-xl font-bold text-gray-800 mb-2">Live Scoreboard</h3>
                         <p className="text-gray-600">Track progress in real-time. Watch as you and your opponents pass test cases live.</p>
@@ -89,10 +90,116 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* FIX 3: Footer is OUTSIDE padding wrapper, so it spans full width */}
             <Footer />
         </div>
       )}
+    </div>
+  );
+}
+
+// --- AUTHED HOME COMPONENT (Restored Logic) ---
+function AuthedHome({ user }: { user: any }) {
+  const auth = useAuth();
+
+  const { status, data: battles } = useQuery<Battle[]>({
+    queryKey: ["battles"],
+    queryFn: async () => {
+      if (!auth.authed) return [];
+      const response = await auth.fetch(BASE_API_URL + "/api/battles");
+      if (!response.ok) throw new Error("Failed to fetch battles");
+      return response.json();
+    },
+  });
+
+  if (status === "pending") {
+    return (
+      <div className="flex-grow flex flex-col items-center justify-center min-h-[60vh]">
+         <div className="text-xl animate-pulse">Loading battles...</div>
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="flex-grow flex flex-col items-center justify-center min-h-[60vh]">
+         <div className="text-xl text-red-500">Failed to load battles</div>
+      </div>
+    );
+  }
+
+  const ongoingBattles = battles?.filter((b) => b.status === "in_progress") || [];
+  const upcomingBattles = battles?.filter((b) => b.status === "pending") || [];
+
+  return (
+    <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col items-center w-full max-w-7xl mx-auto px-4 flex-grow py-8">
+            {ongoingBattles.length === 0 && upcomingBattles.length === 0 && (
+                <div className="text-center mt-12">
+                    <div className="text-2xl font-bold mb-2">Welcome back, {user.handle}!</div>
+                    <div className="text-gray-600 mb-6">Ready to challenge your friends?</div>
+                    <Link to="/create" className="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition shadow-lg">
+                        Create a Battle
+                    </Link>
+                </div>
+            )}
+            
+            {(ongoingBattles.length > 0 || upcomingBattles.length > 0) && (
+                <div className="w-full">
+                    {ongoingBattles.length > 0 && (
+                        <>
+                            <h2 className="text-2xl font-bold mb-4 mt-8">Ongoing Battles</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {ongoingBattles.map(b => <BattleCard key={b.id} battle={b} />)}
+                            </div>
+                        </>
+                    )}
+                    
+                    {upcomingBattles.length > 0 && (
+                        <>
+                            <h2 className="text-2xl font-bold mb-4 mt-12">Upcoming Battles</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {upcomingBattles.map(b => <BattleCard key={b.id} battle={b} />)}
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+        </div>
+        <Footer />
+    </div>
+  );
+}
+
+// --- BATTLE CARD COMPONENT ---
+function BattleCard({ battle }: { battle: Battle }) {
+  const auth = useAuth();
+  const fmt = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
+  
+  const { status, data: participants } = useQuery<{ id: number; handle: string }[]>({
+    queryKey: ["battleParticipants", battle.id],
+    queryFn: async () => {
+      if (!auth.authed) return [];
+      const response = await auth.fetch(`${BASE_API_URL}/api/battle/${battle.id}/participants`);
+      if (!response.ok) throw new Error("Failed to fetch participants");
+      return response.json();
+    },
+  });
+
+  return (
+    <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm hover:shadow-md transition">
+      <Link to={`/battle/${battle.id}`} className="text-xl font-bold hover:text-blue-600 text-gray-900 block mb-2">
+        {battle.title}
+      </Link>
+      <div className="text-gray-600 text-sm space-y-1">
+        <div><strong>Start:</strong> {fmt.format(new Date(battle.start_time))}</div>
+        <div><strong>Duration:</strong> {battle.duration_min} mins</div>
+        <div><strong>Rating:</strong> {battle.min_rating} - {battle.max_rating}</div>
+        {status === "success" && participants && (
+             <div className="truncate mt-2 text-xs text-gray-500">
+                Players: {participants.map(p => p.handle).join(", ")}
+             </div>
+        )}
+      </div>
     </div>
   );
 }
