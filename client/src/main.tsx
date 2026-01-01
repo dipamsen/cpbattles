@@ -17,6 +17,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import BattlePage from "./pages/BattlePage.tsx";
 import ViewProblem from "./pages/ViewProblem.tsx";
 import JoinBattle from "./pages/JoinBattle.tsx";
+import Footer from "./components/Footer.tsx";
 
 const router = createBrowserRouter([
   {
@@ -55,7 +56,7 @@ function Layout() {
   const auth = useAuth();
 
   return (
-    <div className="bg-gradient-to-br from-orange-100 to-emerald-100 min-h-screen flex flex-col items-start font-custom">
+    <div className="bg-gradient-to-br from-orange-100 to-emerald-100 min-h-screen flex flex-col items-start sudo lsof -i font-custom">
       <div className="flex items-center py-4 mx-auto max-w-7xl w-[90%] flex-0 flex-col md:flex-row">
         <div className="flex items-center">
           <img src="/logo.svg" alt="Logo" className="h-15 w-15 mr-2" />
@@ -80,6 +81,8 @@ function Layout() {
         )}
       </div>
       <Outlet />
+
+      <Footer />
     </div>
   );
 }
