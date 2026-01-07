@@ -18,6 +18,7 @@ import BattlePage from "./pages/BattlePage.tsx";
 import ViewProblem from "./pages/ViewProblem.tsx";
 import JoinBattle from "./pages/JoinBattle.tsx";
 import Footer from "./components/Footer.tsx";
+import { HelmetProvider } from "react-helmet-async";
 
 const router = createBrowserRouter([
   {
@@ -98,8 +99,10 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </HelmetProvider>
   </StrictMode>
 );
