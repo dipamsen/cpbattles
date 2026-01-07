@@ -4,6 +4,7 @@ import { BASE_API_URL, useAuth } from "../hooks/useAuth";
 import FinishedBattle from "./FinishedBattle";
 import OngoingBattle from "./OngoingBattle";
 import UpcomingBattle from "./UpcomingBattle";
+import BattleMeta from "../components/BattleMeta";
 
 export default function BattlePage() {
   const { battleId } = useParams();
@@ -55,17 +56,17 @@ export default function BattlePage() {
     );
   }
 
-  if (battle.status === "pending") {
-    return <UpcomingBattle battle={battle} />;
-  } else if (battle.status === "in_progress") {
-    return <OngoingBattle battle={battle} />;
-  } else if (battle.status === "completed") {
-    return <FinishedBattle battle={battle} />;
-  } else {
-    return (
-      <div className="text-center w-full text-red-500">
-        Unknown battle status
-      </div>
-    );
-  }
+  return (
+    <>
+      <BattleMeta battle={battle} />
+      {battle.status === "pending" && <UpcomingBattle battle={battle} />}
+      {battle.status === "in_progress" && <OngoingBattle battle={battle} />}
+      {battle.status === "completed" && <FinishedBattle battle={battle} />}
+      {!["pending", "in_progress", "completed"].includes(battle.status) && (
+        <div className="text-center w-full text-red-500">
+          Unknown battle status
+        </div>
+      )}
+    </>
+  );
 }
